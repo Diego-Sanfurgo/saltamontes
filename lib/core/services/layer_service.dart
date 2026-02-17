@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
@@ -9,10 +10,15 @@ class LayerService {
   static Future<void> addPlacesSource(MapboxMap mapboxMap) async {
     if (!await _ensureStyleIsLoaded(mapboxMap)) return;
 
-    const String sourceID = 'places-source';
+    const String sourceID = MapConstants.placesSourceID;
 
     // 1. Cargar imágenes para cada tipo de punto
-    const List<String> placeTypes = ['lake', 'pass', 'peak', 'waterfall'];
+    const List<String> placeTypes = [
+      MapConstants.lakeID,
+      MapConstants.mountainPassID,
+      MapConstants.peakID,
+      MapConstants.waterfallID,
+    ];
     for (final String type in placeTypes) {
       await addPlaceImageToStyle(mapboxMap, type);
     }
@@ -30,9 +36,9 @@ class LayerService {
       );
     }
 
-    const String clusterLayerID = 'places-cluster';
-    const String countLayerID = 'places-count';
-    const String pointsLayerID = 'places-points';
+    const String clusterLayerID = MapConstants.placesClusterLayerID;
+    const String countLayerID = MapConstants.placesCountLayerID;
+    const String pointsLayerID = MapConstants.placesPointsLayerID;
 
     // 3. Agregar Capa con lógica de Cluster
     if (!await mapboxMap.style.styleLayerExists(clusterLayerID)) {
@@ -40,7 +46,7 @@ class LayerService {
         CircleLayer(
           id: clusterLayerID,
           sourceId: sourceID,
-          sourceLayer: "places",
+          sourceLayer: MapConstants.placesSourceLayerID,
           filter: [
             ">",
             ["get", "point_count"],
@@ -60,7 +66,7 @@ class LayerService {
         SymbolLayer(
           id: countLayerID,
           sourceId: sourceID,
-          sourceLayer: "places",
+          sourceLayer: MapConstants.placesSourceLayerID,
           filter: [
             ">",
             ["get", "point_count"],
@@ -84,7 +90,7 @@ class LayerService {
         SymbolLayer(
           id: pointsLayerID,
           sourceId: sourceID,
-          sourceLayer: "places",
+          sourceLayer: MapConstants.placesSourceLayerID,
           // Filtro inverso al cluster: muestra puntos donde point_count NO es > 1
           filter: [
             "!",
@@ -213,8 +219,8 @@ class LayerService {
   }
 
   static Future<void> addMountainAreaAll(MapboxMap controller) async {
-    const String sourceId = "mountains-mvt-source";
-    const String layerId = "mountains-fill-layer";
+    const String sourceId = MapConstants.mountainsSourceID;
+    const String layerId = MapConstants.mountainsLayerID;
 
     await controller.style.addSource(
       VectorSource(
@@ -226,9 +232,9 @@ class LayerService {
 
     await controller.style.addLayer(
       LineLayer(
-        id: "debug-lines",
+        id: MapConstants.debugLinesLayerID,
         sourceId: sourceId,
-        sourceLayer: "mountain_areas_tiles",
+        sourceLayer: MapConstants.mountainsSourceLayerID,
         lineColor: Colors.black.toARGB32(),
         lineWidth: .05, // Línea gruesa para verla fácil
         lineOpacity: 1.0,
@@ -240,8 +246,7 @@ class LayerService {
       FillLayer(
         id: layerId,
         sourceId: sourceId,
-        sourceLayer:
-            "mountain_areas_tiles", // Debe coincidir con el string en tu SQL ST_AsMVT
+        sourceLayer: MapConstants.mountainsSourceLayerID,
         fillColor: Colors.blue.toARGB32(),
         // fillColor: Colors.green.toARGB32(),
         fillOpacity: 0.4,
@@ -265,21 +270,156 @@ class LayerService {
       await controller.style.removeStyleSource(sourceId);
     }
   }
+
+  static Future<void> filterUserMountains(
+    MapboxMap controller,
+    List<String> userPeakIds,
+  ) async {
+    // Si la lista está vacía, quizás quieras ocultar todo o mostrar todo.
+    // Aquí mostramos SOLO las que están en la lista.
+    await controller.style.setStyleLayerProperties(
+      MapConstants.mountainsLayerID,
+      jsonEncode({
+        // Expresión de filtrado Mapbox
+        // "IN" verifica si el 'place_id' del tile existe en la lista provista
+        "filter": [
+          "in",
+          ["get", "place_id"], // Campo en el MVT
+          ["literal", userPeakIds], // Lista de IDs desde Dart
+        ],
+        // Cambiar color para indicar que es un filtro activo
+        "fill-color": "#729B79",
+      }),
+    );
+  }
+
+  // Para restaurar y ver todas de nuevo:
+  static Future<void> resetMountainsFilter(MapboxMap controller) async {
+    await controller.style.setStyleLayerProperties(
+      MapConstants.mountainsLayerID,
+      jsonEncode({
+        // Elimina el filtro, muestra todo
+        "filter": ["all"],
+        // Cambiar color para indicar que es un filtro activo
+        "fill-color": "#34A853",
+      }),
+    );
+  }
+
+  static Future<void> addOverlay(MapboxMap controller, String overlayId) async {
+    switch (overlayId) {
+      case MapConstants.mountainsSourceID:
+        await addMountainAreaAll(controller);
+      default:
+        log('Unknown overlay: $overlayId');
+    }
+  }
+
+  static Future<void> removeOverlayById(
+    MapboxMap controller,
+    String overlayId,
+  ) async {
+    switch (overlayId) {
+      case MapConstants.mountainsSourceID:
+        await removeOverlay(controller, MapConstants.mountainsSourceID, [
+          MapConstants.mountainsLayerID,
+          MapConstants.debugLinesLayerID,
+        ]);
+      default:
+        log('Unknown overlay: $overlayId');
+    }
+  }
+
+  static Future<void> applyPlaceTypeFilter(
+    MapboxMap controller,
+    String? placeType,
+  ) async {
+    const pointsLayerID = MapConstants.placesPointsLayerID;
+    const clusterLayerID = MapConstants.placesClusterLayerID;
+    const countLayerID = MapConstants.placesCountLayerID;
+
+    // Base filter for non-clustered points
+    final pointsBaseFilter = [
+      "!",
+      [
+        ">",
+        [
+          "coalesce",
+          ["get", "point_count"],
+          0,
+        ],
+        1,
+      ],
+    ];
+
+    // Base filter for clusters
+    final clusterBaseFilter = [
+      ">",
+      ["get", "point_count"],
+      1,
+    ];
+
+    if (placeType != null) {
+      final typeCondition = [
+        "==",
+        ["get", "type"],
+        placeType,
+      ];
+
+      // Points: non-clustered + type match
+      await controller.style.setStyleLayerProperty(pointsLayerID, 'filter', [
+        "all",
+        pointsBaseFilter,
+        typeCondition,
+      ]);
+
+      // Clusters: clustered + type match
+      await controller.style.setStyleLayerProperty(clusterLayerID, 'filter', [
+        "all",
+        clusterBaseFilter,
+        typeCondition,
+      ]);
+
+      // Count labels: same as clusters
+      await controller.style.setStyleLayerProperty(countLayerID, 'filter', [
+        "all",
+        clusterBaseFilter,
+        typeCondition,
+      ]);
+    } else {
+      // Restore original filters
+      await controller.style.setStyleLayerProperty(
+        pointsLayerID,
+        'filter',
+        pointsBaseFilter,
+      );
+      await controller.style.setStyleLayerProperty(
+        clusterLayerID,
+        'filter',
+        clusterBaseFilter,
+      );
+      await controller.style.setStyleLayerProperty(
+        countLayerID,
+        'filter',
+        clusterBaseFilter,
+      );
+    }
+  }
 }
 
 String _getAssetPath(String sourceBaseID) {
   switch (sourceBaseID) {
-    case 'waterfall':
+    case MapConstants.waterfallID:
       return AppAssets.WATERFALL_PIN;
-    case 'peak':
+    case MapConstants.peakID:
       return AppAssets.PEAK_PIN;
-    case 'pass':
+    case MapConstants.mountainPassID:
       return AppAssets.BRIDGE_PIN;
-    case 'lake':
+    case MapConstants.lakeID:
       return AppAssets.LAKE_PIN;
-    case 'park':
+    case MapConstants.parkID:
       return AppAssets.PARK_PIN;
-    case 'volcano':
+    case MapConstants.volcanoID:
       return AppAssets.VOLCANO_PIN;
     default:
       throw ArgumentError('Unsupported sourceBaseID: $sourceBaseID');

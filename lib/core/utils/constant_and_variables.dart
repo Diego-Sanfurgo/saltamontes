@@ -16,15 +16,35 @@ class AppUtil {
 }
 
 class MapConstants {
+  static const String placesID = 'places';
+  static const String mountainsID = 'mountains';
+
   static const String waterfallID = 'waterfall';
   static const String peakID = 'peak';
   static const String mountainPassID = 'pass';
   static const String lakeID = 'lake';
+  static const String parkID = 'park';
+  static const String volcanoID = 'volcano';
   static const String trackingID = 'tracking';
 
-  static const String trackingSourceID = "tracking-source";
-  static const String trackingLayerID = "tracking-layer";
-  static const String trackingFeatureID = "tracking-feature";
+  // Places
+  static const String placesSourceID = '$placesID-source';
+  static const String placesClusterLayerID = '$placesID-cluster';
+  static const String placesCountLayerID = '$placesID-count';
+  static const String placesPointsLayerID = '$placesID-points';
+  static const String placesSourceLayerID = 'places';
+
+  // Mountains
+  static const String mountainsSourceID = '$mountainsID-mvt-source';
+  static const String mountainsLayerID = '$mountainsID-fill-layer';
+  static const String mountainsSourceLayerID = 'mountain_areas_tiles';
+  static const String debugLinesLayerID = 'debug-lines';
+
+  // Tracking
+  static const String trackingSourceID = "$trackingID-source";
+  static const String trackingLayerID = "$trackingID-line";
+  static const String trackingFeatureID = "$trackingID-feature";
+
   static const _supabaseFunctions = "${Environment.supabaseURL}/functions/v1/";
 
   static const String mountainAreasMVT =

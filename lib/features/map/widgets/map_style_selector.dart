@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:saltamontes/core/services/navigation_service.dart';
+import 'package:saltamontes/core/utils/constant_and_variables.dart';
 import 'package:saltamontes/features/home/bloc/map_bloc.dart';
 
 // ── Data models ──
@@ -56,7 +57,7 @@ const _styles = [
 const _overlays = [
   _OverlayOption(
     label: 'Áreas de montaña',
-    overlayId: 'mountains-mvt-source',
+    overlayId: MapConstants.mountainsSourceID,
     icon: Icons.landscape,
   ),
 ];

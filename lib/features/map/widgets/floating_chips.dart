@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:saltamontes/core/utils/constant_and_variables.dart';
 import '../../home/bloc/map_bloc.dart';
 
 const _chipData = [
-  ('peak', 'Cerros', Icons.volcano_outlined),
-  ('lake', 'Lagos', Icons.water_drop_outlined),
-  ('waterfall', 'Cascadas', Icons.water_drop_outlined),
-  ('park', 'Parques', Icons.park_outlined),
+  (MapConstants.peakID, 'Cerros', Icons.volcano_outlined),
+  (MapConstants.lakeID, 'Lagos', Icons.water_drop_outlined),
+  (MapConstants.waterfallID, 'Cascadas', Icons.water_drop_outlined),
+  (MapConstants.parkID, 'Parques', Icons.park_outlined),
 ];
 
 class FloatingChips extends StatelessWidget {

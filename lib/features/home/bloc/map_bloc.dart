@@ -15,8 +15,7 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:saltamontes/core/services/location_service.dart';
 
 import 'package:saltamontes/features/home/functions/on_map_tap_listener.dart';
-
-import '../functions/filter_mountain_areas.dart';
+import 'package:saltamontes/core/utils/constant_and_variables.dart';
 
 part 'map_event.dart';
 part 'map_state.dart';
@@ -57,7 +56,9 @@ class MapBloc extends Bloc<MapEvent, MapState> {
 
     await LayerService.addPlacesSource(_controller!);
 
-    final tapStream = addOnMapTapListener(_controller!, ['places']);
+    final tapStream = addOnMapTapListener(_controller!, [
+      MapConstants.placesID,
+    ]);
 
     tapStream.listen((selectedFeature) async {
       if (_selectedFeatureDTO.featureId.isNotEmpty) {
@@ -68,9 +69,9 @@ class MapBloc extends Bloc<MapEvent, MapState> {
           jsonEncode({'selected': false}),
         );
 
-        if (_selectedFeatureDTO.type == 'peak') {
+        if (_selectedFeatureDTO.type == MapConstants.peakID) {
           // await LayerService.addMountainAreaAll(_controller!);
-          await filterUserMountains(_controller!, [
+          await LayerService.filterUserMountains(_controller!, [
             _selectedFeatureDTO.featureId,
           ]);
         }
@@ -162,11 +163,14 @@ class MapBloc extends Bloc<MapEvent, MapState> {
 
     // Re-add active overlays
     for (final overlayId in state.activeOverlays) {
-      await _addOverlayById(overlayId);
+      await LayerService.addOverlay(_controller!, overlayId);
     }
 
     // Re-apply place type filter if active
-    await _applyPlaceTypeFilter(state.placeTypeFilter);
+    await LayerService.applyPlaceTypeFilter(
+      _controller!,
+      state.placeTypeFilter,
+    );
 
     emit(state.copyWith(styleUri: event.styleUri));
   }
@@ -182,35 +186,14 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     if (overlays.contains(event.overlayId)) {
       // Disable: remove from set and remove layers
       overlays.remove(event.overlayId);
-      await _removeOverlayById(event.overlayId);
+      await LayerService.removeOverlayById(_controller!, event.overlayId);
     } else {
       // Enable: add to set and add layers
       overlays.add(event.overlayId);
-      await _addOverlayById(event.overlayId);
+      await LayerService.addOverlay(_controller!, event.overlayId);
     }
 
     emit(state.copyWith(activeOverlays: overlays));
-  }
-
-  Future<void> _addOverlayById(String overlayId) async {
-    switch (overlayId) {
-      case 'mountains-mvt-source':
-        await LayerService.addMountainAreaAll(_controller!);
-      default:
-        log('Unknown overlay: $overlayId');
-    }
-  }
-
-  Future<void> _removeOverlayById(String overlayId) async {
-    switch (overlayId) {
-      case 'mountains-mvt-source':
-        await LayerService.removeOverlay(_controller!, 'mountains-mvt-source', [
-          'mountains-fill-layer',
-          'debug-lines',
-        ]);
-      default:
-        log('Unknown overlay: $overlayId');
-    }
   }
 
   Future<void> _onFilterPlaces(
@@ -224,52 +207,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         ? null
         : event.placeType;
 
-    await _applyPlaceTypeFilter(newFilter);
+    await LayerService.applyPlaceTypeFilter(_controller!, newFilter);
     emit(state.copyWith(placeTypeFilter: () => newFilter));
-  }
-
-  Future<void> _applyPlaceTypeFilter(String? placeType) async {
-    if (_controller == null) return;
-
-    const pointsLayerID = 'places-points';
-
-    // Original filter for non-clustered points
-    final baseFilter = [
-      "!",
-      [
-        ">",
-        [
-          "coalesce",
-          ["get", "point_count"],
-          0,
-        ],
-        1,
-      ],
-    ];
-
-    if (placeType != null) {
-      // Combine base filter with type filter
-      final typeFilter = [
-        "all",
-        baseFilter,
-        [
-          "==",
-          ["get", "type"],
-          placeType,
-        ],
-      ];
-      await _controller!.style.setStyleLayerProperty(
-        pointsLayerID,
-        'filter',
-        typeFilter,
-      );
-    } else {
-      // Restore original filter (show all non-clustered points)
-      await _controller!.style.setStyleLayerProperty(
-        pointsLayerID,
-        'filter',
-        baseFilter,
-      );
-    }
   }
 }
