@@ -97,12 +97,11 @@ class _BodyState extends State<_Body> {
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: GestureDetector(
+                child: MockedSearchBar(
                   onTap: () => NavigationService.go(
                     Routes.SEARCH,
                     actualUri: GoRouterState.of(context).uri,
                   ),
-                  child: MockedSearchBar(),
                 ),
               ),
               FloatingChips(),
