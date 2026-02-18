@@ -12,6 +12,7 @@ import 'package:saltamontes/features/map/widgets/place_details_sheet.dart';
 import '../home/bloc/map_bloc.dart';
 import 'widgets/floating_chips.dart';
 import 'widgets/map_style_selector.dart';
+import '../../widgets/simple_scale_bar.dart';
 import 'widgets/zoom_buttons.dart';
 
 class MapView extends StatelessWidget {
@@ -155,6 +156,7 @@ class _MapboxWidgetState extends State<_MapboxWidget> {
   MapboxMap? mapController;
   late final MapBloc bloc;
   Timer? idleTimer;
+  final ValueNotifier<CameraState?> _cameraNotifier = ValueNotifier(null);
 
   @override
   void initState() {
@@ -165,6 +167,7 @@ class _MapboxWidgetState extends State<_MapboxWidget> {
   @override
   void dispose() {
     mapController?.dispose();
+    _cameraNotifier.dispose();
     super.dispose();
   }
 
@@ -175,37 +178,48 @@ class _MapboxWidgetState extends State<_MapboxWidget> {
         if (state.status == MapStatus.loading) {
           return const Center(child: CircularProgressIndicator());
         }
-        return MapWidget(
-          // key: ValueKey("map_widget"),
-          key: const PageStorageKey('pathfinder-map'),
-          onMapCreated: (controller) {
-            mapController = controller;
-            controller
-              ..logo.updateSettings(LogoSettings(marginBottom: 8))
-              ..attribution.updateSettings(
-                AttributionSettings(marginBottom: 8, marginLeft: 88),
-              )
-              ..compass.updateSettings(
-                CompassSettings(marginTop: 140, marginRight: 16),
-              )
-              ..scaleBar.updateSettings(
-                ScaleBarSettings(
-                  position: OrnamentPosition.BOTTOM_LEFT,
-                  enabled: false,
-                ),
-              );
-            bloc.add(MapCreated(controller));
-          },
-          styleUri: MapboxStyles.OUTDOORS,
-          mapOptions: MapOptions(pixelRatio: 2),
-          cameraOptions: CameraOptions(zoom: 5),
-          onCameraChangeListener: (cameraChangedEventData) {
-            if (mapController == null) return;
-            idleTimer?.cancel();
-            idleTimer = Timer(const Duration(milliseconds: 500), () async {
-              bloc.add(MapCameraIdle(cameraChangedEventData.cameraState));
-            });
-          },
+        return Stack(
+          children: [
+            MapWidget(
+              // key: ValueKey("map_widget"),
+              key: const PageStorageKey('pathfinder-map'),
+              onMapCreated: (controller) {
+                mapController = controller;
+                controller
+                  ..logo.updateSettings(LogoSettings(marginBottom: 8))
+                  ..attribution.updateSettings(
+                    AttributionSettings(marginBottom: 8, marginLeft: 88),
+                  )
+                  ..compass.updateSettings(
+                    CompassSettings(marginTop: 140, marginRight: 16),
+                  )
+                  ..scaleBar.updateSettings(
+                    ScaleBarSettings(
+                      position: OrnamentPosition.BOTTOM_LEFT,
+                      enabled: false,
+                    ),
+                  );
+                bloc.add(MapCreated(controller));
+              },
+              styleUri: MapboxStyles.OUTDOORS,
+              mapOptions: MapOptions(pixelRatio: 2),
+              cameraOptions: CameraOptions(zoom: 5),
+              onCameraChangeListener: (cameraChangedEventData) {
+                _cameraNotifier.value = cameraChangedEventData.cameraState;
+
+                if (mapController == null) return;
+                idleTimer?.cancel();
+                idleTimer = Timer(const Duration(milliseconds: 500), () async {
+                  bloc.add(MapCameraIdle(cameraChangedEventData.cameraState));
+                });
+              },
+            ),
+            SimpleScaleBar(
+              cameraStateNotifier: _cameraNotifier,
+              alignment: Alignment.centerLeft,
+              padding: const EdgeInsets.only(left: 16, top: 100),
+            ),
+          ],
         );
       },
     );
