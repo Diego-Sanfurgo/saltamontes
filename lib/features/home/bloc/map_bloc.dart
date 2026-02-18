@@ -8,6 +8,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:equatable/equatable.dart';
 import 'package:saltamontes/core/services/layer_service.dart';
 import 'package:saltamontes/data/models/place.dart';
+import 'package:saltamontes/data/repositories/place_repository.dart';
 import 'package:saltamontes/features/home/dto/selected_feature_dto.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
@@ -21,7 +22,8 @@ part 'map_event.dart';
 part 'map_state.dart';
 
 class MapBloc extends Bloc<MapEvent, MapState> {
-  MapBloc() : super(const MapState(status: MapStatus.loading)) {
+  MapBloc(this._placeRepository)
+    : super(const MapState(status: MapStatus.loading)) {
     _init();
     on<MapCreated>(_onCreated);
     on<MapReload>(_onReload);
@@ -30,8 +32,16 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     on<MapChangeStyle>(_onChangeStyle);
     on<MapToggleOverlay>(_onToggleOverlay);
     on<MapFilterPlaces>(_onFilterPlaces);
+    on<MapFilterAltitude>(_onFilterAltitude);
+    on<MapClearFilters>(_onClearFilters);
     on<MapSelectFeature>(_onSelectFeature);
+    on<MapDeselectFeature>(_onDeselectFeature);
+    on<MapZoomIn>(_onZoomIn);
+    on<MapZoomOut>(_onZoomOut);
+    on<MapFeatureTapped>(_onFeatureTapped);
   }
+
+  final PlaceRepository _placeRepository;
 
   MapboxMap? _controller;
   final LocationService _locationService = LocationService.instance;
@@ -61,26 +71,8 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       MapConstants.placesID,
     ]);
 
-    tapStream.listen((selectedFeature) async {
-      // Clusters are handled directly in the tap listener (zoom in).
-      // Skip feature selection logic to avoid calling setFeatureState
-      // with an empty sourceID/featureId.
-      if (selectedFeature.isCluster) return;
-
-      final wasDeselected = await _handleFeatureSelection(selectedFeature);
-
-      // Move camera only on new selection, not on deselection
-      if (!wasDeselected) {
-        await _controller!.easeTo(
-          CameraOptions(
-            center: Point(
-              coordinates: Position(selectedFeature.lng!, selectedFeature.lat!),
-            ),
-            zoom: 14.5,
-          ),
-          MapAnimationOptions(duration: 500),
-        );
-      }
+    tapStream.listen((selectedFeature) {
+      add(MapFeatureTapped(selectedFeature));
     });
 
     emit(state.copyWith(status: MapStatus.loaded, places: []));
@@ -153,6 +145,11 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     final selectedFeature = SelectedFeatureDTO.fromPlace(event.place);
     await _handleFeatureSelection(selectedFeature);
 
+    // Set selectedPlace directly since we already have the full Place
+    emit(
+      state.copyWith(selectedPlace: () => event.place, isLoadingPlace: false),
+    );
+
     // Move camera to selected place
     add(
       MapMoveCamera(
@@ -160,9 +157,34 @@ class MapBloc extends Bloc<MapEvent, MapState> {
           event.place.geom.coordinates.latitude,
           event.place.geom.coordinates.longitude,
         ),
-        zoomLevel: 14.5, // Or whatever zoom level is appropriate
+        zoomLevel: 14.5,
       ),
     );
+  }
+
+  Future<void> _onDeselectFeature(
+    MapDeselectFeature event,
+    Emitter<MapState> emit,
+  ) async {
+    if (_controller == null) return;
+
+    if (_selectedFeatureDTO.featureId.isNotEmpty) {
+      await _controller!.setFeatureState(
+        _selectedFeatureDTO.sourceID,
+        null,
+        _selectedFeatureDTO.featureId,
+        jsonEncode({'selected': false}),
+      );
+
+      await LayerService.clearFeatureAreaFilter(
+        _controller!,
+        _selectedFeatureDTO.type,
+      );
+
+      _selectedFeatureDTO = SelectedFeatureDTO.empty();
+    }
+
+    emit(state.copyWith(selectedPlace: () => null, isLoadingPlace: false));
   }
 
   Future<void> _onReload(MapReload event, Emitter<MapState> emit) async {
@@ -241,10 +263,12 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       await LayerService.addOverlay(_controller!, overlayId);
     }
 
-    // Re-apply place type filter if active
-    await LayerService.applyPlaceTypeFilter(
+    // Re-apply filters if active
+    await LayerService.applyMapFilters(
       _controller!,
-      state.placeTypeFilter,
+      placeTypes: state.placeTypeFilter,
+      altitudeMin: state.altitudeMin,
+      altitudeMax: state.altitudeMax,
     );
 
     emit(state.copyWith(styleUri: event.styleUri));
@@ -277,12 +301,106 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   ) async {
     if (_controller == null) return;
 
-    // Toggle: if the same type is selected, clear the filter
-    final newFilter = event.placeType == state.placeTypeFilter
-        ? null
-        : event.placeType;
+    // Toggle: add or remove the type from the set
+    final types = Set<String>.from(state.placeTypeFilter);
+    if (types.contains(event.placeType)) {
+      types.remove(event.placeType);
+    } else {
+      types.add(event.placeType);
+    }
 
-    await LayerService.applyPlaceTypeFilter(_controller!, newFilter);
-    emit(state.copyWith(placeTypeFilter: () => newFilter));
+    await LayerService.applyMapFilters(
+      _controller!,
+      placeTypes: types,
+      altitudeMin: state.altitudeMin,
+      altitudeMax: state.altitudeMax,
+    );
+    emit(state.copyWith(placeTypeFilter: types));
+  }
+
+  Future<void> _onFilterAltitude(
+    MapFilterAltitude event,
+    Emitter<MapState> emit,
+  ) async {
+    if (_controller == null) return;
+
+    await LayerService.applyMapFilters(
+      _controller!,
+      placeTypes: state.placeTypeFilter,
+      altitudeMin: event.min,
+      altitudeMax: event.max,
+    );
+    emit(
+      state.copyWith(
+        altitudeMin: () => event.min,
+        altitudeMax: () => event.max,
+      ),
+    );
+  }
+
+  Future<void> _onClearFilters(
+    MapClearFilters event,
+    Emitter<MapState> emit,
+  ) async {
+    if (_controller == null) return;
+
+    await LayerService.applyMapFilters(_controller!);
+    emit(
+      state.copyWith(
+        placeTypeFilter: const {},
+        altitudeMin: () => null,
+        altitudeMax: () => null,
+      ),
+    );
+  }
+
+  Future<void> _onZoomIn(MapZoomIn event, Emitter<MapState> emit) async {
+    if (_controller == null) return;
+    final cameraState = await _controller!.getCameraState();
+    await _controller!.easeTo(
+      CameraOptions(zoom: cameraState.zoom + 1),
+      MapAnimationOptions(duration: 300),
+    );
+  }
+
+  Future<void> _onZoomOut(MapZoomOut event, Emitter<MapState> emit) async {
+    if (_controller == null) return;
+    final cameraState = await _controller!.getCameraState();
+    await _controller!.easeTo(
+      CameraOptions(zoom: cameraState.zoom - 1),
+      MapAnimationOptions(duration: 300),
+    );
+  }
+
+  Future<void> _onFeatureTapped(
+    MapFeatureTapped event,
+    Emitter<MapState> emit,
+  ) async {
+    // Clusters are handled directly in the tap listener (zoom in).
+    // Skip feature selection logic to avoid calling setFeatureState
+    // with an empty sourceID/featureId.
+    if (event.feature.isCluster) return;
+
+    final wasDeselected = await _handleFeatureSelection(event.feature);
+
+    if (wasDeselected) {
+      emit(state.copyWith(selectedPlace: () => null, isLoadingPlace: false));
+    } else {
+      // Move camera to selected feature
+      await _controller!.easeTo(
+        CameraOptions(
+          center: Point(
+            coordinates: Position(event.feature.lng!, event.feature.lat!),
+          ),
+          zoom: 14.5,
+        ),
+        MapAnimationOptions(duration: 500),
+      );
+
+      // Fetch full Place data by ID
+      emit(state.copyWith(isLoadingPlace: true, selectedPlace: () => null));
+      final place = await _placeRepository.getById(event.feature.featureId);
+      emit(state.copyWith(isLoadingPlace: false, selectedPlace: () => place));
+    }
   }
 }

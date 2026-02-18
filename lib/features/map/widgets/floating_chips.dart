@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:saltamontes/core/utils/constant_and_variables.dart';
 import '../../home/bloc/map_bloc.dart';
 
-const _chipData = [
+const chipData = [
   (MapConstants.peakID, 'Cerros', Icons.volcano_outlined),
   (MapConstants.lakeID, 'Lagos', Icons.water_drop_outlined),
   (MapConstants.waterfallID, 'Cascadas', Icons.water_drop_outlined),
@@ -18,9 +18,9 @@ class FloatingChips extends StatelessWidget {
   Widget build(BuildContext context) {
     final double height = MediaQuery.sizeOf(context).height * 0.05;
 
-    return BlocSelector<MapBloc, MapState, String?>(
+    return BlocSelector<MapBloc, MapState, Set<String>>(
       selector: (state) => state.placeTypeFilter,
-      builder: (context, activeFilter) {
+      builder: (context, activeFilters) {
         return SizedBox(
           height: height,
           child: SingleChildScrollView(
@@ -28,9 +28,9 @@ class FloatingChips extends StatelessWidget {
             padding: const EdgeInsets.only(left: 16),
             child: Row(
               spacing: 4,
-              children: _chipData.map((chip) {
+              children: chipData.map((chip) {
                 final (type, label, icon) = chip;
-                final isSelected = activeFilter == type;
+                final isSelected = activeFilters.contains(type);
                 return ChoiceChip(
                   shape: StadiumBorder(),
                   selected: isSelected,

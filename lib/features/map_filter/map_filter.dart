@@ -1,79 +1,66 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:saltamontes/features/map_filter/bloc/map_filter_bloc.dart';
+
+import 'package:saltamontes/features/home/bloc/map_bloc.dart';
+import 'package:saltamontes/features/map_filter/widgets/altitude_filters.dart';
+import 'package:saltamontes/features/map_filter/widgets/type_filters.dart';
 
 class MapFilterView extends StatelessWidget {
   const MapFilterView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => MapFilterBloc(),
-      child: _MapFilter(),
-    );
-  }
-}
-
-class _MapFilter extends StatelessWidget {
-  const _MapFilter();
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Map Filter')),
-      body: _Body(),
+      appBar: AppBar(
+        title: const Text('Filtros'),
+        actions: [
+          BlocSelector<MapBloc, MapState, bool>(
+            selector: (state) => state.hasActiveFilters,
+            builder: (context, hasFilters) {
+              if (!hasFilters) return const SizedBox.shrink();
+              return TextButton.icon(
+                icon: const Icon(Icons.clear_all),
+                label: const Text('Limpiar'),
+                onPressed: () => context.read<MapBloc>().add(MapClearFilters()),
+              );
+            },
+          ),
+        ],
+      ),
+      body: const _Body(),
     );
   }
 }
 
-class _Body extends StatefulWidget {
+class _Body extends StatelessWidget {
   const _Body();
-
-  @override
-  State<_Body> createState() => _BodyState();
-}
-
-class _BodyState extends State<_Body> {
-  late final ScrollController scrollController;
-
-  @override
-  void initState() {
-    super.initState();
-    scrollController = ScrollController();
-  }
-
-  @override
-  void dispose() {
-    scrollController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      controller: scrollController,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Column(
-        spacing: 16,
-        children: [_TypeFilters(), _LocationFilters()],
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const TypeFilters(),
+          const _SectionDivider(),
+          const AltitudeFilters(),
+        ],
       ),
     );
   }
 }
 
-class _TypeFilters extends StatelessWidget {
-  const _TypeFilters();
+// ─── Section Divider ─────────────────────────────────────────────────────────
+
+class _SectionDivider extends StatelessWidget {
+  const _SectionDivider();
 
   @override
   Widget build(BuildContext context) {
-    return const Column(children: [Text('Tipos')]);
-  }
-}
-
-class _LocationFilters extends StatelessWidget {
-  const _LocationFilters();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Placeholder();
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 12),
+      child: Divider(),
+    );
   }
 }

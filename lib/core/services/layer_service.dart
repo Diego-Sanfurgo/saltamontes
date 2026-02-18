@@ -373,10 +373,17 @@ class LayerService {
     }
   }
 
-  static Future<void> applyPlaceTypeFilter(
-    MapboxMap controller,
-    String? placeType,
-  ) async {
+  /// Applies combined type and altitude filters on the places layers.
+  ///
+  /// [placeTypes]: if non-empty, only points matching one of these types are shown.
+  /// [altitudeMin]: if non-null, only points with alt >= this value are shown.
+  /// [altitudeMax]: if non-null, only points with alt <= this value are shown.
+  static Future<void> applyMapFilters(
+    MapboxMap controller, {
+    Set<String> placeTypes = const {},
+    double? altitudeMin,
+    double? altitudeMax,
+  }) async {
     const pointsLayerID = MapConstants.placesPointsLayerID;
     const clusterLayerID = MapConstants.placesClusterLayerID;
     const countLayerID = MapConstants.placesCountLayerID;
@@ -402,35 +409,64 @@ class LayerService {
       1,
     ];
 
-    if (placeType != null) {
-      final typeCondition = [
-        "==",
+    // Build additional conditions
+    final List<dynamic> extraConditions = [];
+
+    // Type filter (multi-select)
+    if (placeTypes.isNotEmpty) {
+      extraConditions.add([
+        "in",
         ["get", "type"],
-        placeType,
-      ];
-
-      // Points: non-clustered + type match
-      await controller.style.setStyleLayerProperty(pointsLayerID, 'filter', [
-        "all",
-        pointsBaseFilter,
-        typeCondition,
+        ["literal", placeTypes.toList()],
       ]);
+    }
 
-      // Clusters: clustered + type match
-      await controller.style.setStyleLayerProperty(clusterLayerID, 'filter', [
-        "all",
-        clusterBaseFilter,
-        typeCondition,
+    // Altitude filters
+    if (altitudeMin != null) {
+      extraConditions.add([
+        ">=",
+        [
+          "to-number",
+          ["get", "alt"],
+          0,
+        ],
+        altitudeMin,
       ]);
+    }
+    if (altitudeMax != null) {
+      extraConditions.add([
+        "<=",
+        [
+          "to-number",
+          ["get", "alt"],
+          0,
+        ],
+        altitudeMax,
+      ]);
+    }
 
-      // Count labels: same as clusters
-      await controller.style.setStyleLayerProperty(countLayerID, 'filter', [
-        "all",
-        clusterBaseFilter,
-        typeCondition,
-      ]);
+    if (extraConditions.isNotEmpty) {
+      // Build combined filter: ["all", baseFilter, ...extraConditions]
+      final pointsFilter = ["all", pointsBaseFilter, ...extraConditions];
+      final clusterFilter = ["all", clusterBaseFilter, ...extraConditions];
+
+      await controller.style.setStyleLayerProperty(
+        pointsLayerID,
+        'filter',
+        pointsFilter,
+      );
+      await controller.style.setStyleLayerProperty(
+        clusterLayerID,
+        'filter',
+        clusterFilter,
+      );
+      await controller.style.setStyleLayerProperty(
+        countLayerID,
+        'filter',
+        clusterFilter,
+      );
     } else {
-      // Restore original filters
+      // Restore original filters (no extra conditions)
       await controller.style.setStyleLayerProperty(
         pointsLayerID,
         'filter',

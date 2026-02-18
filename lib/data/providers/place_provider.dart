@@ -87,6 +87,21 @@ class PlaceProvider {
     }
   }
 
+  Future<Place?> fetchById(String id) async {
+    try {
+      final Map<String, dynamic>? response = await supabase
+          .from('places')
+          .select('*')
+          .eq('id', id)
+          .maybeSingle();
+      if (response == null) return null;
+      return Place.fromJson(response);
+    } catch (e) {
+      log(e.toString());
+      return null;
+    }
+  }
+
   // final String _geoJsonPath = 'assets/data/cerros_v3.geojson';
 
   // Future<Set<Place>> fetchPeaks() async {

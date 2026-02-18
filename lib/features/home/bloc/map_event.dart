@@ -58,11 +58,26 @@ class MapToggleOverlay extends MapEvent {
 class MapFilterPlaces extends MapEvent {
   MapFilterPlaces(this.placeType);
 
-  /// The type to filter by (e.g. 'peak', 'lake'). Null clears the filter.
-  final String? placeType;
+  /// The type to toggle in the filter set (e.g. 'peak', 'lake').
+  final String placeType;
 
   @override
   List<Object?> get props => [placeType];
+}
+
+class MapFilterAltitude extends MapEvent {
+  MapFilterAltitude({this.min, this.max});
+
+  final double? min;
+  final double? max;
+
+  @override
+  List<Object?> get props => [min, max];
+}
+
+class MapClearFilters extends MapEvent {
+  @override
+  List<Object?> get props => [];
 }
 
 class MapSelectFeature extends MapEvent {
@@ -72,4 +87,28 @@ class MapSelectFeature extends MapEvent {
 
   @override
   List<Object?> get props => [place];
+}
+
+class MapDeselectFeature extends MapEvent {
+  @override
+  List<Object?> get props => [];
+}
+
+class MapZoomIn extends MapEvent {
+  @override
+  List<Object?> get props => [];
+}
+
+class MapZoomOut extends MapEvent {
+  @override
+  List<Object?> get props => [];
+}
+
+class MapFeatureTapped extends MapEvent {
+  MapFeatureTapped(this.feature);
+
+  final SelectedFeatureDTO feature;
+
+  @override
+  List<Object?> get props => [feature];
 }

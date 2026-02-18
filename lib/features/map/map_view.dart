@@ -7,10 +7,12 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 import 'package:saltamontes/core/services/navigation_service.dart';
 import 'package:saltamontes/features/map/widgets/mocked_search_bar.dart';
+import 'package:saltamontes/features/map/widgets/place_details_sheet.dart';
 
 import '../home/bloc/map_bloc.dart';
 import 'widgets/floating_chips.dart';
 import 'widgets/map_style_selector.dart';
+import 'widgets/zoom_buttons.dart';
 
 class MapView extends StatelessWidget {
   const MapView({super.key});
@@ -64,52 +66,80 @@ class _BodyState extends State<_Body> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        _MapboxWidget(),
-        Positioned(
-          bottom: 16,
-          right: 16,
-          child: Column(
-            spacing: 8,
-            children: [
-              FloatingActionButton.small(
-                heroTag: Key("layer_FAB"),
-                child: Icon(Icons.layers_outlined),
-                onPressed: () => showMapStyleSelector(context),
-              ),
-              FloatingActionButton(
-                heroTag: Key("location_FAB"),
-                child: Icon(Icons.my_location_outlined),
-                onPressed: () =>
-                    BlocProvider.of<MapBloc>(context).add(MapMoveCamera()),
-              ),
-            ],
-          ),
-        ),
-
-        Positioned(
-          top: 16,
-          left: 0,
-          right: 0,
-          child: Column(
-            spacing: 8,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: MockedSearchBar(
-                  onTap: () => NavigationService.go(
-                    Routes.SEARCH,
-                    actualUri: GoRouterState.of(context).uri,
+    return BlocBuilder<MapBloc, MapState>(
+      buildWhen: (prev, curr) =>
+          prev.selectedPlace != curr.selectedPlace ||
+          prev.isLoadingPlace != curr.isLoadingPlace,
+      builder: (context, state) {
+        return Stack(
+          children: [
+            _MapboxWidget(),
+            Positioned(
+              bottom: 16,
+              right: 16,
+              child: Column(
+                spacing: 8,
+                children: [
+                  const ZoomButtons(),
+                  FloatingActionButton.small(
+                    heroTag: Key("layer_FAB"),
+                    child: Icon(Icons.layers_outlined),
+                    onPressed: () => showMapStyleSelector(context),
                   ),
-                  onFilterTap: () => NavigationService.go(Routes.MAP_FILTER),
+                  FloatingActionButton(
+                    heroTag: Key("location_FAB"),
+                    child: Icon(Icons.my_location_outlined),
+                    onPressed: () =>
+                        BlocProvider.of<MapBloc>(context).add(MapMoveCamera()),
+                  ),
+                ],
+              ),
+            ),
+
+            Positioned(
+              top: 16,
+              left: 0,
+              right: 0,
+              child: Column(
+                spacing: 8,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: MockedSearchBar(
+                      onTap: () => NavigationService.go(
+                        Routes.SEARCH,
+                        actualUri: GoRouterState.of(context).uri,
+                      ),
+                      onFilterTap: () =>
+                          NavigationService.go(Routes.MAP_FILTER),
+                    ),
+                  ),
+                  FloatingChips(),
+                ],
+              ),
+            ),
+
+            // Place details sheet or loading indicator
+            if (state.isLoadingPlace)
+              Positioned(
+                bottom: 24,
+                left: 0,
+                right: 0,
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (state.selectedPlace != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: PlaceDetailsSheet(
+                  place: state.selectedPlace!,
+                  onClose: () => BlocProvider.of<MapBloc>(
+                    context,
+                  ).add(MapDeselectFeature()),
                 ),
               ),
-              FloatingChips(),
-            ],
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 }

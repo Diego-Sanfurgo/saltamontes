@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:saltamontes/data/providers/place_provider.dart';
 import 'package:saltamontes/data/repositories/map_repository.dart';
+import 'package:saltamontes/data/repositories/place_repository.dart';
 import 'bloc/map_bloc.dart';
 
 class HomeShellView extends StatelessWidget {
@@ -27,7 +28,7 @@ class HomeShellView extends StatelessWidget {
     return RepositoryProvider(
       create: (context) => TrackingMapRepository(PlaceProvider()),
       child: BlocProvider(
-        create: (context) => MapBloc(),
+        create: (context) => MapBloc(PlaceRepository(PlaceProvider())),
         child: Scaffold(
           // El body es el navigationShell mismo.
           // GoRouter se encarga de usar un IndexedStack internamente.

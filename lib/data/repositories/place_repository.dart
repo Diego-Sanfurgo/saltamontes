@@ -61,4 +61,13 @@ class PlaceRepository {
       return {};
     }
   }
+
+  Future<Place?> getById(String id) async {
+    try {
+      return await _provider.fetchById(id);
+    } on Exception catch (e) {
+      log(e.toString());
+      return null;
+    }
+  }
 }
