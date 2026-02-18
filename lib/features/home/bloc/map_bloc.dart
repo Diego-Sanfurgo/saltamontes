@@ -57,7 +57,13 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     _controller = event.controller;
 
     _controller!.location.updateSettings(
-      LocationComponentSettings(enabled: true, puckBearingEnabled: true),
+      LocationComponentSettings(
+        enabled: true,
+        puckBearingEnabled: true,
+        puckBearing: PuckBearing.HEADING,
+        pulsingEnabled: true,
+        locationPuck: LocationPuck(locationPuck2D: LocationPuck2D()),
+      ),
     );
 
     await LayerService.addPlacesSource(_controller!);

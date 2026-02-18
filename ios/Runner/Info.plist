@@ -54,5 +54,7 @@
 	    <string>location</string>
 	    <string>fetch</string> 
 	</array>
+	<key>NSLocationHeadingUsageDescription</key>
+	<string>Necesitamos la brújula para orientar el mapa en el sendero.</string>
 </dict>
 </plist>
