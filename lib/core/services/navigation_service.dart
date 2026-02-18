@@ -25,9 +25,13 @@ class NavigationService {
 
     AppUtil.navigatorContext.go(path, extra: extra);
   }
+
+  static void push(Routes route, {dynamic extra}) {
+    AppUtil.navigatorContext.push(_getPath(route), extra: extra);
+  }
 }
 
-enum Routes { HOME, MAP, PROFILE, SEARCH, TRACKING_MAP }
+enum Routes { HOME, MAP, MAP_FILTER, PROFILE, SEARCH, TRACKING_MAP }
 
 String _getPath(Routes route, {String? parameter}) {
   switch (route) {
@@ -41,5 +45,7 @@ String _getPath(Routes route, {String? parameter}) {
       return '/search';
     case Routes.TRACKING_MAP:
       return '/tracking_map';
+    case Routes.MAP_FILTER:
+      return '/map/filter';
   }
 }

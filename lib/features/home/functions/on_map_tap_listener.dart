@@ -33,6 +33,8 @@ Stream<SelectedFeatureDTO> addOnMapTapListener(
     final bool isCluster = layerStrings.contains('cluster');
     final String sourceIDSelected = '${layerStrings.first}-source';
 
+    final PlaceGeometry geometry = PlaceGeometry.fromFeature(rawFeature);
+
     if (isCluster) {
       // Obtenemos el zoom actual
       final CameraState cameraState = await controller.getCameraState();
@@ -40,17 +42,11 @@ Stream<SelectedFeatureDTO> addOnMapTapListener(
       zoom = currentZoom + 2.0;
       if (zoom > 15.5) zoom = 15.5;
 
-      // final FeatureExtensionValue featureZoom = await controller
-      //     .getGeoJsonClusterExpansionZoom(sourceIDSelected, rawFeature);
-      // zoom = double.parse(featureZoom.value ?? '14.5');
+      await controller.easeTo(
+        CameraOptions(center: geometry.toMapboxPoint(), zoom: zoom),
+        MapAnimationOptions(duration: 500),
+      );
     }
-
-    final PlaceGeometry geometry = PlaceGeometry.fromFeature(rawFeature);
-
-    await controller.easeTo(
-      CameraOptions(center: geometry.toMapboxPoint(), zoom: zoom),
-      MapAnimationOptions(duration: 500),
-    );
 
     final normalizedMap = normalizeMap(rawFeature);
 
@@ -60,6 +56,8 @@ Stream<SelectedFeatureDTO> addOnMapTapListener(
         isCluster: isCluster,
         sourceID: sourceIDSelected,
         type: normalizedMap['properties']['type'],
+        lat: geometry.coordinates.latitude,
+        lng: geometry.coordinates.longitude,
       ),
     );
   });

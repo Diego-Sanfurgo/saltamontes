@@ -31,6 +31,10 @@ class AppRouter {
                     path: '/search',
                     builder: (context, state) => const SearchView(),
                   ),
+                  GoRoute(
+                    path: '/filter',
+                    builder: (context, state) => const MapFilterView(),
+                  ),
                 ],
               ),
             ],

@@ -230,28 +230,30 @@ class LayerService {
       ),
     );
 
-    await controller.style.addLayer(
+    // Add layers below the places layers so points render on top
+    await controller.style.addLayerAt(
       LineLayer(
-        id: MapConstants.debugLinesLayerID,
+        id: MapConstants.mountainsLineLayerID,
         sourceId: sourceId,
         sourceLayer: MapConstants.mountainsSourceLayerID,
         lineColor: Colors.black.toARGB32(),
-        lineWidth: .05, // Línea gruesa para verla fácil
+        lineWidth: .05,
         lineOpacity: 1.0,
       ),
+      LayerPosition(below: MapConstants.placesClusterLayerID),
     );
 
     // 2. Añadir Capa
-    await controller.style.addLayer(
+    await controller.style.addLayerAt(
       FillLayer(
         id: layerId,
         sourceId: sourceId,
         sourceLayer: MapConstants.mountainsSourceLayerID,
         fillColor: Colors.blue.toARGB32(),
-        // fillColor: Colors.green.toARGB32(),
         fillOpacity: 0.4,
         fillOutlineColor: Colors.green[900]!.toARGB32(),
       ),
+      LayerPosition(below: MapConstants.mountainsLineLayerID),
     );
   }
 
@@ -271,39 +273,78 @@ class LayerService {
     }
   }
 
+  static Future<void> filterFeatureArea(
+    MapboxMap controller,
+    String featureType,
+    List<String> featureIds,
+  ) async {
+    final layerInfo = _getLayerIdsForType(featureType);
+
+    if (layerInfo == null) {
+      log("⚠️ No layer configuration found for feature type: $featureType");
+      return;
+    }
+
+    // Ensure the layer is added (e.g., mountains)
+    if (featureType == MapConstants.peakID) {
+      await addMountainAreaAll(controller);
+    }
+
+    final filter = [
+      "in",
+      ["get", "place_id"], // Campo en el MVT
+      ["literal", featureIds],
+    ];
+
+    await controller.style.setStyleLayerProperties(
+      layerInfo.fillLayerId,
+      jsonEncode({"filter": filter, "fill-color": "#729B79"}),
+    );
+
+    // Also filter and style the line layer for selection
+    await controller.style.setStyleLayerProperties(
+      layerInfo.lineLayerId,
+      jsonEncode({"filter": filter, "line-color": "#FFFFFF", "line-width": 4}),
+    );
+  }
+
+  static Future<void> clearFeatureAreaFilter(
+    MapboxMap controller,
+    String featureType,
+  ) async {
+    final layerInfo = _getLayerIdsForType(featureType);
+
+    if (layerInfo == null) return;
+
+    // Remove the overlay to hide the area
+    await removeOverlayById(controller, layerInfo.sourceId);
+  }
+
+  static ({String sourceId, String fillLayerId, String lineLayerId})?
+  _getLayerIdsForType(String featureType) {
+    switch (featureType) {
+      case MapConstants.peakID:
+        return (
+          sourceId: MapConstants.mountainsSourceID,
+          fillLayerId: MapConstants.mountainsLayerID,
+          lineLayerId: MapConstants.mountainsLineLayerID,
+        );
+      // Add other cases here (lake, park) when they are ready
+      default:
+        return null; // Return null if not configured
+    }
+  }
+
   static Future<void> filterUserMountains(
     MapboxMap controller,
     List<String> userPeakIds,
   ) async {
-    // Si la lista está vacía, quizás quieras ocultar todo o mostrar todo.
-    // Aquí mostramos SOLO las que están en la lista.
-    await controller.style.setStyleLayerProperties(
-      MapConstants.mountainsLayerID,
-      jsonEncode({
-        // Expresión de filtrado Mapbox
-        // "IN" verifica si el 'place_id' del tile existe en la lista provista
-        "filter": [
-          "in",
-          ["get", "place_id"], // Campo en el MVT
-          ["literal", userPeakIds], // Lista de IDs desde Dart
-        ],
-        // Cambiar color para indicar que es un filtro activo
-        "fill-color": "#729B79",
-      }),
-    );
+    await filterFeatureArea(controller, MapConstants.peakID, userPeakIds);
   }
 
   // Para restaurar y ver todas de nuevo:
   static Future<void> resetMountainsFilter(MapboxMap controller) async {
-    await controller.style.setStyleLayerProperties(
-      MapConstants.mountainsLayerID,
-      jsonEncode({
-        // Elimina el filtro, muestra todo
-        "filter": ["all"],
-        // Cambiar color para indicar que es un filtro activo
-        "fill-color": "#34A853",
-      }),
-    );
+    await clearFeatureAreaFilter(controller, MapConstants.peakID);
   }
 
   static Future<void> addOverlay(MapboxMap controller, String overlayId) async {
@@ -323,7 +364,7 @@ class LayerService {
       case MapConstants.mountainsSourceID:
         await removeOverlay(controller, MapConstants.mountainsSourceID, [
           MapConstants.mountainsLayerID,
-          MapConstants.debugLinesLayerID,
+          MapConstants.mountainsLineLayerID,
         ]);
       default:
         log('Unknown overlay: $overlayId');

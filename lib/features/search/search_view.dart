@@ -52,8 +52,8 @@ class _Body extends StatelessWidget {
             leading: BackButton(onPressed: () => NavigationService.pop()),
             actions: [
               IconButton(
-                onPressed: () {},
-                icon: Icon(Icons.filter_alt_outlined),
+                onPressed: () => NavigationService.push(Routes.MAP_FILTER),
+                icon: Icon(Icons.tune_outlined),
               ),
             ],
             titleSpacing: 0,

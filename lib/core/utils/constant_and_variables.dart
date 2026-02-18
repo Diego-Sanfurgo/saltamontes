@@ -38,7 +38,7 @@ class MapConstants {
   static const String mountainsSourceID = '$mountainsID-mvt-source';
   static const String mountainsLayerID = '$mountainsID-fill-layer';
   static const String mountainsSourceLayerID = 'mountain_areas_tiles';
-  static const String debugLinesLayerID = 'debug-lines';
+  static const String mountainsLineLayerID = '$mountainsID-area-lines';
 
   // Tracking
   static const String trackingSourceID = "$trackingID-source";

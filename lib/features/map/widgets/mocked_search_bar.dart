@@ -4,8 +4,9 @@ import 'package:saltamontes/widgets/animated_search_text.dart';
 
 class MockedSearchBar extends StatelessWidget {
   final VoidCallback? onTap;
+  final VoidCallback? onFilterTap;
 
-  const MockedSearchBar({super.key, this.onTap});
+  const MockedSearchBar({super.key, this.onTap, this.onFilterTap});
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +47,7 @@ class MockedSearchBar extends StatelessWidget {
                 color: Theme.of(context).brightness == Brightness.dark
                     ? AppColors.darkPrimaryColor
                     : AppColors.lightTextColor,
-                onPressed: () {},
+                onPressed: onFilterTap,
               ),
             ],
           ),

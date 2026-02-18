@@ -102,6 +102,7 @@ class _BodyState extends State<_Body> {
                     Routes.SEARCH,
                     actualUri: GoRouterState.of(context).uri,
                   ),
+                  onFilterTap: () => NavigationService.go(Routes.MAP_FILTER),
                 ),
               ),
               FloatingChips(),

@@ -64,3 +64,12 @@ class MapFilterPlaces extends MapEvent {
   @override
   List<Object?> get props => [placeType];
 }
+
+class MapSelectFeature extends MapEvent {
+  MapSelectFeature(this.place);
+
+  final Place place;
+
+  @override
+  List<Object?> get props => [place];
+}

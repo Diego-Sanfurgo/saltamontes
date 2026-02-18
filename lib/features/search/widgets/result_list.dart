@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:latlong2/latlong.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:saltamontes/data/models/place.dart';
@@ -40,14 +39,7 @@ class ResultList extends StatelessWidget {
           trailing: Icon(Icons.arrow_right),
           onTap: () {
             NavigationService.pop();
-            BlocProvider.of<MapBloc>(context).add(
-              MapMoveCamera(
-                targetLocation: LatLng(
-                  place.geom.coordinates.latitude,
-                  place.geom.coordinates.longitude,
-                ),
-              ),
-            );
+            BlocProvider.of<MapBloc>(context).add(MapSelectFeature(place));
           },
         );
       },

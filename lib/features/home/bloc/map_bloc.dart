@@ -30,6 +30,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     on<MapChangeStyle>(_onChangeStyle);
     on<MapToggleOverlay>(_onToggleOverlay);
     on<MapFilterPlaces>(_onFilterPlaces);
+    on<MapSelectFeature>(_onSelectFeature);
   }
 
   MapboxMap? _controller;
@@ -61,33 +62,102 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     ]);
 
     tapStream.listen((selectedFeature) async {
-      if (_selectedFeatureDTO.featureId.isNotEmpty) {
-        await _controller!.setFeatureState(
-          _selectedFeatureDTO.sourceID,
-          null,
-          _selectedFeatureDTO.featureId,
-          jsonEncode({'selected': false}),
+      final wasDeselected = await _handleFeatureSelection(selectedFeature);
+
+      // Move camera only on new selection, not on deselection
+      if (!wasDeselected && !selectedFeature.isCluster) {
+        await _controller!.easeTo(
+          CameraOptions(
+            center: Point(
+              coordinates: Position(selectedFeature.lng!, selectedFeature.lat!),
+            ),
+            zoom: 14.5,
+          ),
+          MapAnimationOptions(duration: 500),
         );
-
-        if (_selectedFeatureDTO.type == MapConstants.peakID) {
-          // await LayerService.addMountainAreaAll(_controller!);
-          await LayerService.filterUserMountains(_controller!, [
-            _selectedFeatureDTO.featureId,
-          ]);
-        }
       }
-
-      await _controller!.setFeatureState(
-        selectedFeature.sourceID,
-        null,
-        selectedFeature.featureId,
-        jsonEncode({'selected': true}),
-      );
-      _selectedFeatureDTO = selectedFeature;
     });
 
     emit(state.copyWith(status: MapStatus.loaded, places: []));
     add(MapMoveCamera());
+  }
+
+  /// Returns `true` if the feature was deselected, `false` if a new feature was selected.
+  Future<bool> _handleFeatureSelection(
+    SelectedFeatureDTO selectedFeature,
+  ) async {
+    if (_controller == null) return false;
+
+    // Check if re-tapping the same feature to deselect
+    if (_selectedFeatureDTO.featureId == selectedFeature.featureId) {
+      await _controller!.setFeatureState(
+        _selectedFeatureDTO.sourceID,
+        null,
+        _selectedFeatureDTO.featureId,
+        jsonEncode({'selected': false}),
+      );
+
+      await LayerService.clearFeatureAreaFilter(
+        _controller!,
+        _selectedFeatureDTO.type,
+      );
+
+      _selectedFeatureDTO = SelectedFeatureDTO.empty();
+      return true;
+    }
+
+    if (_selectedFeatureDTO.featureId.isNotEmpty) {
+      // Clear previous selection
+      await _controller!.setFeatureState(
+        _selectedFeatureDTO.sourceID,
+        null,
+        _selectedFeatureDTO.featureId,
+        jsonEncode({'selected': false}),
+      );
+
+      // Clear previous area filter
+      await LayerService.clearFeatureAreaFilter(
+        _controller!,
+        _selectedFeatureDTO.type,
+      );
+    }
+
+    // Set new selection
+    await _controller!.setFeatureState(
+      selectedFeature.sourceID,
+      null,
+      selectedFeature.featureId,
+      jsonEncode({'selected': true}),
+    );
+
+    // Show area for new selected feature
+    await LayerService.filterFeatureArea(_controller!, selectedFeature.type, [
+      selectedFeature.featureId,
+    ]);
+
+    _selectedFeatureDTO = selectedFeature;
+    return false;
+  }
+
+  Future<void> _onSelectFeature(
+    MapSelectFeature event,
+    Emitter<MapState> emit,
+  ) async {
+    if (_controller == null) return;
+
+    final selectedFeature = SelectedFeatureDTO.fromPlace(event.place);
+    await _handleFeatureSelection(selectedFeature);
+
+    // Move camera to selected place
+    add(
+      MapMoveCamera(
+        targetLocation: LatLng(
+          event.place.geom.coordinates.latitude,
+          event.place.geom.coordinates.longitude,
+        ),
+        zoomLevel: 14.5, // Or whatever zoom level is appropriate
+      ),
+    );
   }
 
   Future<void> _onReload(MapReload event, Emitter<MapState> emit) async {
