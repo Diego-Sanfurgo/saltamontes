@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'package:go_router/go_router.dart';
@@ -155,7 +154,7 @@ class _MapboxWidget extends StatefulWidget {
 class _MapboxWidgetState extends State<_MapboxWidget> {
   MapboxMap? mapController;
   late final MapBloc bloc;
-  Timer? idleTimer;
+
   final ValueNotifier<CameraState?> _cameraNotifier = ValueNotifier(null);
 
   @override
@@ -181,8 +180,7 @@ class _MapboxWidgetState extends State<_MapboxWidget> {
         return Stack(
           children: [
             MapWidget(
-              // key: ValueKey("map_widget"),
-              key: const PageStorageKey('pathfinder-map'),
+              key: const PageStorageKey('map_widget'),
               onMapCreated: (controller) {
                 mapController = controller;
                 controller
@@ -206,12 +204,6 @@ class _MapboxWidgetState extends State<_MapboxWidget> {
               cameraOptions: CameraOptions(zoom: 5),
               onCameraChangeListener: (cameraChangedEventData) {
                 _cameraNotifier.value = cameraChangedEventData.cameraState;
-
-                if (mapController == null) return;
-                idleTimer?.cancel();
-                idleTimer = Timer(const Duration(milliseconds: 500), () async {
-                  bloc.add(MapCameraIdle(cameraChangedEventData.cameraState));
-                });
               },
             ),
             SimpleScaleBar(

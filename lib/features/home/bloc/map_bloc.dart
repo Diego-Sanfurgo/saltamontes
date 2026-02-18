@@ -24,21 +24,17 @@ part 'map_state.dart';
 class MapBloc extends Bloc<MapEvent, MapState> {
   MapBloc(this._placeRepository)
     : super(const MapState(status: MapStatus.loading)) {
-    _init();
     on<MapCreated>(_onCreated);
-    on<MapReload>(_onReload);
-    on<MapCameraIdle>(_onCameraIdle);
+    on<MapStarted>(_onStarted);
     on<MapMoveCamera>(_onMoveCamera);
     on<MapChangeStyle>(_onChangeStyle);
     on<MapToggleOverlay>(_onToggleOverlay);
     on<MapFilterPlaces>(_onFilterPlaces);
     on<MapFilterAltitude>(_onFilterAltitude);
     on<MapClearFilters>(_onClearFilters);
-    on<MapSelectFeature>(_onSelectFeature);
+    on<MapZoom>(_onZoom);
+    on<MapSelectPlace>(_onSelectPlace);
     on<MapDeselectFeature>(_onDeselectFeature);
-    on<MapZoomIn>(_onZoomIn);
-    on<MapZoomOut>(_onZoomOut);
-    on<MapFeatureTapped>(_onFeatureTapped);
   }
 
   final PlaceRepository _placeRepository;
@@ -47,7 +43,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   final LocationService _locationService = LocationService.instance;
   SelectedFeatureDTO _selectedFeatureDTO = SelectedFeatureDTO.empty();
 
-  Future<void> _init() async {
+  Future<void> _onStarted(MapStarted event, Emitter<MapState> emit) async {
     Map<Permission, PermissionStatus> statuses = await [
       Permission.location,
       Permission.locationAlways,
@@ -55,7 +51,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     ].request();
     log(statuses.toString());
 
-    add(MapReload());
+    emit(state.copyWith(status: MapStatus.initial));
   }
 
   Future<void> _onCreated(MapCreated event, Emitter<MapState> emit) async {
@@ -72,11 +68,23 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     ]);
 
     tapStream.listen((selectedFeature) {
-      add(MapFeatureTapped(selectedFeature));
+      add(MapSelectPlace(feature: selectedFeature));
     });
 
     emit(state.copyWith(status: MapStatus.loaded, places: []));
     add(MapMoveCamera());
+  }
+
+  /// Returns `true` if the feature was deselected, `false` if a new feature was selected.
+  Future<void> _clearSelectionFor(SelectedFeatureDTO dto) async {
+    await _controller!.setFeatureState(
+      dto.sourceID,
+      null,
+      dto.featureId,
+      jsonEncode({'selected': false}),
+    );
+
+    await LayerService.clearFeatureAreaFilter(_controller!, dto.type);
   }
 
   /// Returns `true` if the feature was deselected, `false` if a new feature was selected.
@@ -87,36 +95,14 @@ class MapBloc extends Bloc<MapEvent, MapState> {
 
     // Check if re-tapping the same feature to deselect
     if (_selectedFeatureDTO.featureId == selectedFeature.featureId) {
-      await _controller!.setFeatureState(
-        _selectedFeatureDTO.sourceID,
-        null,
-        _selectedFeatureDTO.featureId,
-        jsonEncode({'selected': false}),
-      );
-
-      await LayerService.clearFeatureAreaFilter(
-        _controller!,
-        _selectedFeatureDTO.type,
-      );
-
+      await _clearSelectionFor(_selectedFeatureDTO);
       _selectedFeatureDTO = SelectedFeatureDTO.empty();
       return true;
     }
 
+    // Clear previous selection if any
     if (_selectedFeatureDTO.featureId.isNotEmpty) {
-      // Clear previous selection
-      await _controller!.setFeatureState(
-        _selectedFeatureDTO.sourceID,
-        null,
-        _selectedFeatureDTO.featureId,
-        jsonEncode({'selected': false}),
-      );
-
-      // Clear previous area filter
-      await LayerService.clearFeatureAreaFilter(
-        _controller!,
-        _selectedFeatureDTO.type,
-      );
+      await _clearSelectionFor(_selectedFeatureDTO);
     }
 
     // Set new selection
@@ -136,30 +122,58 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     return false;
   }
 
-  Future<void> _onSelectFeature(
-    MapSelectFeature event,
+  Future<void> _onSelectPlace(
+    MapSelectPlace event,
     Emitter<MapState> emit,
   ) async {
     if (_controller == null) return;
 
-    final selectedFeature = SelectedFeatureDTO.fromPlace(event.place);
-    await _handleFeatureSelection(selectedFeature);
+    final SelectedFeatureDTO dto;
+    final LatLng target;
 
-    // Set selectedPlace directly since we already have the full Place
-    emit(
-      state.copyWith(selectedPlace: () => event.place, isLoadingPlace: false),
-    );
+    // 1. Resolve DTO and Target
+    if (event.place != null) {
+      dto = SelectedFeatureDTO.fromPlace(event.place!);
+      target = LatLng(
+        event.place!.geom.coordinates.latitude,
+        event.place!.geom.coordinates.longitude,
+      );
+    } else if (event.feature != null && !event.feature!.isCluster) {
+      dto = event.feature!;
+      target = LatLng(event.feature!.lat!, event.feature!.lng!);
+    } else {
+      return;
+    }
 
-    // Move camera to selected place
-    add(
-      MapMoveCamera(
-        targetLocation: LatLng(
-          event.place.geom.coordinates.latitude,
-          event.place.geom.coordinates.longitude,
-        ),
-        zoomLevel: 14.5,
+    // 2. Handle Selection/Deselection Logic
+    final wasDeselected = await _handleFeatureSelection(dto);
+
+    if (wasDeselected) {
+      emit(state.copyWith(selectedPlace: () => null, isLoadingPlace: false));
+      return;
+    }
+
+    // 3. Move Camera
+    await _controller!.easeTo(
+      CameraOptions(
+        center: Point(coordinates: Position(target.longitude, target.latitude)),
+        zoom: 14.5,
       ),
+      MapAnimationOptions(duration: 500),
     );
+
+    // 4. Update State (Place known)
+    if (event.place != null) {
+      emit(
+        state.copyWith(selectedPlace: () => event.place, isLoadingPlace: false),
+      );
+      return;
+    }
+
+    // 5. Update State (Fetch Place)
+    emit(state.copyWith(isLoadingPlace: true, selectedPlace: () => null));
+    final place = await _placeRepository.getById(dto.featureId);
+    emit(state.copyWith(isLoadingPlace: false, selectedPlace: () => place));
   }
 
   Future<void> _onDeselectFeature(
@@ -169,37 +183,11 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     if (_controller == null) return;
 
     if (_selectedFeatureDTO.featureId.isNotEmpty) {
-      await _controller!.setFeatureState(
-        _selectedFeatureDTO.sourceID,
-        null,
-        _selectedFeatureDTO.featureId,
-        jsonEncode({'selected': false}),
-      );
-
-      await LayerService.clearFeatureAreaFilter(
-        _controller!,
-        _selectedFeatureDTO.type,
-      );
-
+      await _clearSelectionFor(_selectedFeatureDTO);
       _selectedFeatureDTO = SelectedFeatureDTO.empty();
     }
 
     emit(state.copyWith(selectedPlace: () => null, isLoadingPlace: false));
-  }
-
-  Future<void> _onReload(MapReload event, Emitter<MapState> emit) async {
-    emit(state.copyWith(status: MapStatus.initial));
-  }
-
-  Future<void> _onCameraIdle(
-    MapCameraIdle event,
-    Emitter<MapState> emit,
-  ) async {
-    if (_controller == null) return;
-    // await filterVisiblePoints(_controller!, event.cameraState);
-    // final visibleRegion = await _controller!.coordinateBoundsForCamera(
-    //   event.cameraState.toCameraOptions(),
-    // );
   }
 
   Future<void> _onMoveCamera(
@@ -354,53 +342,12 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     );
   }
 
-  Future<void> _onZoomIn(MapZoomIn event, Emitter<MapState> emit) async {
+  Future<void> _onZoom(MapZoom event, Emitter<MapState> emit) async {
     if (_controller == null) return;
     final cameraState = await _controller!.getCameraState();
     await _controller!.easeTo(
-      CameraOptions(zoom: cameraState.zoom + 1),
+      CameraOptions(zoom: cameraState.zoom + event.delta),
       MapAnimationOptions(duration: 300),
     );
-  }
-
-  Future<void> _onZoomOut(MapZoomOut event, Emitter<MapState> emit) async {
-    if (_controller == null) return;
-    final cameraState = await _controller!.getCameraState();
-    await _controller!.easeTo(
-      CameraOptions(zoom: cameraState.zoom - 1),
-      MapAnimationOptions(duration: 300),
-    );
-  }
-
-  Future<void> _onFeatureTapped(
-    MapFeatureTapped event,
-    Emitter<MapState> emit,
-  ) async {
-    // Clusters are handled directly in the tap listener (zoom in).
-    // Skip feature selection logic to avoid calling setFeatureState
-    // with an empty sourceID/featureId.
-    if (event.feature.isCluster) return;
-
-    final wasDeselected = await _handleFeatureSelection(event.feature);
-
-    if (wasDeselected) {
-      emit(state.copyWith(selectedPlace: () => null, isLoadingPlace: false));
-    } else {
-      // Move camera to selected feature
-      await _controller!.easeTo(
-        CameraOptions(
-          center: Point(
-            coordinates: Position(event.feature.lng!, event.feature.lat!),
-          ),
-          zoom: 14.5,
-        ),
-        MapAnimationOptions(duration: 500),
-      );
-
-      // Fetch full Place data by ID
-      emit(state.copyWith(isLoadingPlace: true, selectedPlace: () => null));
-      final place = await _placeRepository.getById(event.feature.featureId);
-      emit(state.copyWith(isLoadingPlace: false, selectedPlace: () => place));
-    }
   }
 }

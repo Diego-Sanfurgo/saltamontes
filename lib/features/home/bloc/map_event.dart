@@ -12,18 +12,9 @@ class MapCreated extends MapEvent {
   List<Object?> get props => [controller];
 }
 
-class MapReload extends MapEvent {
+class MapStarted extends MapEvent {
   @override
   List<Object?> get props => [];
-}
-
-class MapCameraIdle extends MapEvent {
-  MapCameraIdle(this.cameraState);
-
-  final CameraState cameraState;
-
-  @override
-  List<Object?> get props => [cameraState];
 }
 
 class MapMoveCamera extends MapEvent {
@@ -80,35 +71,26 @@ class MapClearFilters extends MapEvent {
   List<Object?> get props => [];
 }
 
-class MapSelectFeature extends MapEvent {
-  MapSelectFeature(this.place);
-
-  final Place place;
-
-  @override
-  List<Object?> get props => [place];
-}
-
 class MapDeselectFeature extends MapEvent {
   @override
   List<Object?> get props => [];
 }
 
-class MapZoomIn extends MapEvent {
+class MapZoom extends MapEvent {
+  MapZoom(this.delta);
+
+  final double delta;
+
   @override
-  List<Object?> get props => [];
+  List<Object?> get props => [delta];
 }
 
-class MapZoomOut extends MapEvent {
-  @override
-  List<Object?> get props => [];
-}
+class MapSelectPlace extends MapEvent {
+  MapSelectPlace({this.place, this.feature});
 
-class MapFeatureTapped extends MapEvent {
-  MapFeatureTapped(this.feature);
-
-  final SelectedFeatureDTO feature;
+  final Place? place;
+  final SelectedFeatureDTO? feature;
 
   @override
-  List<Object?> get props => [feature];
+  List<Object?> get props => [place, feature];
 }

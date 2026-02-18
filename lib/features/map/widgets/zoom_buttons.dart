@@ -21,7 +21,7 @@ class ZoomButtons extends StatelessWidget {
           // Zoom In Button
           _ZoomButton(
             icon: Icons.add,
-            onTap: () => context.read<MapBloc>().add(MapZoomIn()),
+            onTap: () => context.read<MapBloc>().add(MapZoom(1.0)),
             borderRadius: const BorderRadius.vertical(
               top: Radius.circular(16),
               bottom: Radius.zero,
@@ -34,7 +34,7 @@ class ZoomButtons extends StatelessWidget {
           // Zoom Out Button
           _ZoomButton(
             icon: Icons.remove,
-            onTap: () => context.read<MapBloc>().add(MapZoomOut()),
+            onTap: () => context.read<MapBloc>().add(MapZoom(-1.0)),
             borderRadius: const BorderRadius.vertical(
               top: Radius.zero,
               bottom: Radius.circular(16),

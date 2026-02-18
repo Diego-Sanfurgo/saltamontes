@@ -39,7 +39,7 @@ class ResultList extends StatelessWidget {
           trailing: Icon(Icons.arrow_right),
           onTap: () {
             NavigationService.pop();
-            BlocProvider.of<MapBloc>(context).add(MapSelectFeature(place));
+            BlocProvider.of<MapBloc>(context).add(MapSelectPlace(place: place));
           },
         );
       },

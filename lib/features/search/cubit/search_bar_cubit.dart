@@ -8,18 +8,9 @@ import 'package:saltamontes/data/repositories/place_repository.dart';
 part 'search_bar_state.dart';
 
 class SearchBarCubit extends Cubit<SearchBarState> {
-  SearchBarCubit(this._placeRepository) : super(SearchBarState()) {
-    // _init();
-  }
+  SearchBarCubit(this._placeRepository) : super(SearchBarState());
 
   final PlaceRepository _placeRepository;
-
-  // Future<void> _init() async {
-  //   // final String jsonData = await _mountainsRepository.getPeaksJson();
-  //   // _jsonPeaks.addAll(
-  //   //   jsonDecode(jsonData)['features'].cast<Map<String, dynamic>>(),
-  //   // );
-  // }
 
   Future<void> queryPeaks(String query) async {
     try {
