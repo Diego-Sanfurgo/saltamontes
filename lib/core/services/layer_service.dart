@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import 'package:saltamontes/core/theme/colors.dart';
 import 'package:saltamontes/core/utils/constant_and_variables.dart';
 
 import 'image_service.dart';
@@ -53,7 +54,7 @@ class LayerService {
             1,
           ],
           circleRadius: 18.0,
-          circleColor: Colors.orange.toARGB32(),
+          circleColor: AppColors.accentColor.toARGB32(),
           circleStrokeWidth: 2.0,
           circleStrokeColor: Colors.white.toARGB32(),
         ),
@@ -174,7 +175,8 @@ class LayerService {
         id: lineLayerID,
         sourceId: sourceID,
         lineWidth: 5.0,
-        lineColor: Colors.orange.toARGB32(), // O el color hexadecimal en int
+        lineColor: AppColors.accentColor
+            .toARGB32(), // O el color hexadecimal en int
         lineCap: LineCap.ROUND,
         lineJoin: LineJoin.ROUND,
       );
