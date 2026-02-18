@@ -62,10 +62,15 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     ]);
 
     tapStream.listen((selectedFeature) async {
+      // Clusters are handled directly in the tap listener (zoom in).
+      // Skip feature selection logic to avoid calling setFeatureState
+      // with an empty sourceID/featureId.
+      if (selectedFeature.isCluster) return;
+
       final wasDeselected = await _handleFeatureSelection(selectedFeature);
 
       // Move camera only on new selection, not on deselection
-      if (!wasDeselected && !selectedFeature.isCluster) {
+      if (!wasDeselected) {
         await _controller!.easeTo(
           CameraOptions(
             center: Point(
