@@ -63,7 +63,7 @@ class _AltitudeFiltersState extends State<AltitudeFilters> {
   void _onSliderChangeEnd(RangeValues values) {
     final min = values.start == _altMin ? null : values.start;
     final max = values.end == _altMax ? null : values.end;
-    context.read<MapBloc>().add(MapFilterAltitude(min: min, max: max));
+    context.read<MapBloc>().add(MapFilter(minAlt: min, maxAlt: max));
   }
 
   void _onTextFieldSubmitted() {
@@ -84,9 +84,9 @@ class _AltitudeFiltersState extends State<AltitudeFilters> {
     });
 
     context.read<MapBloc>().add(
-      MapFilterAltitude(
-        min: min != null ? _sliderMin : null,
-        max: max != null ? _sliderMax : null,
+      MapFilter(
+        minAlt: min != null ? _sliderMin : null,
+        maxAlt: max != null ? _sliderMax : null,
       ),
     );
   }

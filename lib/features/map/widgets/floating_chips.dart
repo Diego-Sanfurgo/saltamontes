@@ -37,7 +37,7 @@ class FloatingChips extends StatelessWidget {
                   avatar: isSelected ? null : Icon(icon),
                   onSelected: (_) => BlocProvider.of<MapBloc>(
                     context,
-                  ).add(MapFilterPlaces(type)),
+                  ).add(MapFilter(togglePlaceType: type)),
                   label: Text(label),
                 );
               }).toList(),

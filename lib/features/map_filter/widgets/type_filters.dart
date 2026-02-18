@@ -26,8 +26,9 @@ class TypeFilters extends StatelessWidget {
                   selected: isSelected,
                   avatar: isSelected ? null : Icon(icon, size: 18),
                   label: Text(label),
-                  onSelected: (_) =>
-                      context.read<MapBloc>().add(MapFilterPlaces(type)),
+                  onSelected: (_) => context.read<MapBloc>().add(
+                    MapFilter(togglePlaceType: type),
+                  ),
                 );
               }).toList(),
             );

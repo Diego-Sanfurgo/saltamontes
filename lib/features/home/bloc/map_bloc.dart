@@ -29,8 +29,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     on<MapMoveCamera>(_onMoveCamera);
     on<MapChangeStyle>(_onChangeStyle);
     on<MapToggleOverlay>(_onToggleOverlay);
-    on<MapFilterPlaces>(_onFilterPlaces);
-    on<MapFilterAltitude>(_onFilterAltitude);
+    on<MapFilter>(_onFilter);
     on<MapClearFilters>(_onClearFilters);
     on<MapZoom>(_onZoom);
     on<MapSelectPlace>(_onSelectPlace);
@@ -283,45 +282,33 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     emit(state.copyWith(activeOverlays: overlays));
   }
 
-  Future<void> _onFilterPlaces(
-    MapFilterPlaces event,
-    Emitter<MapState> emit,
-  ) async {
+  Future<void> _onFilter(MapFilter event, Emitter<MapState> emit) async {
     if (_controller == null) return;
 
-    // Toggle: add or remove the type from the set
-    final types = Set<String>.from(state.placeTypeFilter);
-    if (types.contains(event.placeType)) {
-      types.remove(event.placeType);
-    } else {
-      types.add(event.placeType);
+    final placeTypes = Set<String>.from(state.placeTypeFilter);
+    if (event.togglePlaceType != null) {
+      if (placeTypes.contains(event.togglePlaceType!)) {
+        placeTypes.remove(event.togglePlaceType!);
+      } else {
+        placeTypes.add(event.togglePlaceType!);
+      }
     }
 
-    await LayerService.applyMapFilters(
-      _controller!,
-      placeTypes: types,
-      altitudeMin: state.altitudeMin,
-      altitudeMax: state.altitudeMax,
-    );
-    emit(state.copyWith(placeTypeFilter: types));
-  }
-
-  Future<void> _onFilterAltitude(
-    MapFilterAltitude event,
-    Emitter<MapState> emit,
-  ) async {
-    if (_controller == null) return;
+    final newMin = event.minAlt ?? state.altitudeMin;
+    final newMax = event.maxAlt ?? state.altitudeMax;
 
     await LayerService.applyMapFilters(
       _controller!,
-      placeTypes: state.placeTypeFilter,
-      altitudeMin: event.min,
-      altitudeMax: event.max,
+      placeTypes: placeTypes,
+      altitudeMin: newMin,
+      altitudeMax: newMax,
     );
+
     emit(
       state.copyWith(
-        altitudeMin: () => event.min,
-        altitudeMax: () => event.max,
+        placeTypeFilter: placeTypes,
+        altitudeMin: () => newMin,
+        altitudeMax: () => newMax,
       ),
     );
   }

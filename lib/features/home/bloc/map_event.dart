@@ -46,24 +46,16 @@ class MapToggleOverlay extends MapEvent {
   List<Object?> get props => [overlayId];
 }
 
-class MapFilterPlaces extends MapEvent {
-  MapFilterPlaces(this.placeType);
+class MapFilter extends MapEvent {
+  MapFilter({this.togglePlaceType, this.minAlt, this.maxAlt});
 
   /// The type to toggle in the filter set (e.g. 'peak', 'lake').
-  final String placeType;
+  final String? togglePlaceType;
+  final double? minAlt;
+  final double? maxAlt;
 
   @override
-  List<Object?> get props => [placeType];
-}
-
-class MapFilterAltitude extends MapEvent {
-  MapFilterAltitude({this.min, this.max});
-
-  final double? min;
-  final double? max;
-
-  @override
-  List<Object?> get props => [min, max];
+  List<Object?> get props => [togglePlaceType, minAlt, maxAlt];
 }
 
 class MapClearFilters extends MapEvent {
