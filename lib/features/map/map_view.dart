@@ -246,10 +246,16 @@ class _MapboxWidgetState extends State<_MapboxWidget> {
                 ),
               ),
             ),
-            SimpleScaleBar(
-              cameraStateNotifier: _cameraNotifier,
-              alignment: Alignment.centerLeft,
-              padding: const EdgeInsets.only(left: 16, top: 100),
+
+            Positioned(
+              left: 16,
+              top: 0,
+              bottom: 0,
+              child: SimpleScaleBar(
+                cameraStateNotifier: _cameraNotifier,
+                alignment: Alignment.centerLeft,
+                // padding: const EdgeInsets.only(left: 16, top: 100),
+              ),
             ),
           ],
         );

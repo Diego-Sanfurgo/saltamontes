@@ -7,29 +7,24 @@ class SimpleScaleBar extends StatelessWidget {
     super.key,
     required this.cameraStateNotifier,
     this.alignment = Alignment.centerRight,
-    this.padding = const EdgeInsets.all(16.0),
   });
 
   final ValueNotifier<CameraState?> cameraStateNotifier;
   final Alignment alignment;
-  final EdgeInsets padding;
 
   @override
   Widget build(BuildContext context) {
     return Align(
       alignment: alignment,
-      child: Padding(
-        padding: padding,
-        child: ValueListenableBuilder<CameraState?>(
-          valueListenable: cameraStateNotifier,
-          builder: (context, cameraState, child) {
-            if (cameraState == null) return const SizedBox.shrink();
-            return _ScaleBarPainterWrapper(
-              zoom: cameraState.zoom,
-              latitude: cameraState.center.coordinates.lat.toDouble(),
-            );
-          },
-        ),
+      child: ValueListenableBuilder<CameraState?>(
+        valueListenable: cameraStateNotifier,
+        builder: (context, cameraState, child) {
+          if (cameraState == null) return const SizedBox.shrink();
+          return _ScaleBarPainterWrapper(
+            zoom: cameraState.zoom,
+            latitude: cameraState.center.coordinates.lat.toDouble(),
+          );
+        },
       ),
     );
   }
