@@ -7,9 +7,6 @@ class ZoomButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
     return Card(
       elevation: 4,
       shadowColor: Colors.black26,
@@ -27,9 +24,6 @@ class ZoomButtons extends StatelessWidget {
               bottom: Radius.zero,
             ),
           ),
-
-          // Divider
-          Divider(height: 1, thickness: 1, color: colorScheme.outlineVariant),
 
           // Zoom Out Button
           _ZoomButton(

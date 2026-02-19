@@ -254,7 +254,6 @@ class _MapboxWidgetState extends State<_MapboxWidget> {
               child: SimpleScaleBar(
                 cameraStateNotifier: _cameraNotifier,
                 alignment: Alignment.centerLeft,
-                // padding: const EdgeInsets.only(left: 16, top: 100),
               ),
             ),
           ],
