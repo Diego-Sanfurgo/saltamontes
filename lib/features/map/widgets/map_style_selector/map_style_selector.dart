@@ -4,6 +4,7 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:saltamontes/core/services/navigation_service.dart';
 import 'package:saltamontes/core/utils/constant_and_variables.dart';
 import 'package:saltamontes/features/home/bloc/map_bloc.dart';
+import 'package:saltamontes/features/map/widgets/map_style_selector/cubit/map_style_cubit.dart';
 
 // ── Data models ──
 
@@ -66,14 +67,19 @@ const _overlays = [
 ///
 /// Returns a [MapStyleSelectorResult] or `null` if dismissed.
 void showMapStyleSelector(BuildContext context) {
+  final styleCubit = context.read<MapStyleCubit>();
+  final mapBloc = context.read<MapBloc>();
+
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (_) => BlocBuilder<MapBloc, MapState>(
-      builder: (context, state) {
-        return _MapStyleSheet();
-      },
+    builder: (_) => MultiBlocProvider(
+      providers: [
+        BlocProvider.value(value: styleCubit),
+        BlocProvider.value(value: mapBloc),
+      ],
+      child: const _MapStyleSheet(),
     ),
   );
 }
@@ -86,18 +92,18 @@ class _MapStyleSheet extends StatefulWidget {
 }
 
 class _MapStyleSheetState extends State<_MapStyleSheet> {
-  late final MapBloc bloc;
+  late final MapStyleCubit cubit;
   @override
   void initState() {
     super.initState();
-    bloc = BlocProvider.of<MapBloc>(context);
+    cubit = BlocProvider.of<MapStyleCubit>(context);
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return BlocBuilder<MapBloc, MapState>(
+    return BlocBuilder<MapStyleCubit, MapStyleState>(
       builder: (context, state) {
         return DraggableScrollableSheet(
           initialChildSize: 0.35,
@@ -152,7 +158,15 @@ class _MapStyleSheetState extends State<_MapStyleSheet> {
                         label: style.label,
                         icon: style.icon,
                         isSelected: isSelected,
-                        onTap: () => bloc.add(MapChangeStyle(style.styleUri)),
+                        onTap: () {
+                          final mapState = context.read<MapBloc>().state;
+                          cubit.onChangeStyle(
+                            style.styleUri,
+                            placeTypes: mapState.placeTypeFilter,
+                            altitudeMin: mapState.altitudeMin,
+                            altitudeMax: mapState.altitudeMax,
+                          );
+                        },
                       );
                     }).toList(),
                   ),
@@ -184,8 +198,7 @@ class _MapStyleSheetState extends State<_MapStyleSheet> {
                         label: overlay.label,
                         icon: overlay.icon,
                         isSelected: isActive,
-                        onTap: () =>
-                            bloc.add(MapToggleOverlay(overlay.overlayId)),
+                        onTap: () => cubit.onToggleOverlay(overlay.overlayId),
                       );
                     }).toList(),
                   ),

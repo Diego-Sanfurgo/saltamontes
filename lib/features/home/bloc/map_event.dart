@@ -28,24 +28,6 @@ class MapMoveCamera extends MapEvent {
   List<Object?> get props => [zoomLevel, targetLocation, coordinates];
 }
 
-class MapChangeStyle extends MapEvent {
-  MapChangeStyle(this.styleUri);
-
-  final String styleUri;
-
-  @override
-  List<Object?> get props => [styleUri];
-}
-
-class MapToggleOverlay extends MapEvent {
-  MapToggleOverlay(this.overlayId);
-
-  final String overlayId;
-
-  @override
-  List<Object?> get props => [overlayId];
-}
-
 class MapFilter extends MapEvent {
   MapFilter({this.togglePlaceType, this.minAlt, this.maxAlt});
 
@@ -66,15 +48,6 @@ class MapClearFilters extends MapEvent {
 class MapDeselectFeature extends MapEvent {
   @override
   List<Object?> get props => [];
-}
-
-class MapZoom extends MapEvent {
-  MapZoom(this.delta);
-
-  final double delta;
-
-  @override
-  List<Object?> get props => [delta];
 }
 
 class MapSelectPlace extends MapEvent {

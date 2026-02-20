@@ -27,11 +27,8 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     on<MapCreated>(_onCreated);
     on<MapStarted>(_onStarted);
     on<MapMoveCamera>(_onMoveCamera);
-    on<MapChangeStyle>(_onChangeStyle);
-    on<MapToggleOverlay>(_onToggleOverlay);
     on<MapFilter>(_onFilter);
     on<MapClearFilters>(_onClearFilters);
-    on<MapZoom>(_onZoom);
     on<MapSelectPlace>(_onSelectPlace);
     on<MapDeselectFeature>(_onDeselectFeature);
   }
@@ -241,53 +238,6 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     );
   }
 
-  Future<void> _onChangeStyle(
-    MapChangeStyle event,
-    Emitter<MapState> emit,
-  ) async {
-    if (_controller == null) return;
-    await _controller!.loadStyleURI(event.styleUri);
-
-    // Re-add base layers after style change
-    await LayerService.addPlacesSource(_controller!);
-
-    // Re-add active overlays
-    for (final overlayId in state.activeOverlays) {
-      await LayerService.addOverlay(_controller!, overlayId);
-    }
-
-    // Re-apply filters if active
-    await LayerService.applyMapFilters(
-      _controller!,
-      placeTypes: state.placeTypeFilter,
-      altitudeMin: state.altitudeMin,
-      altitudeMax: state.altitudeMax,
-    );
-
-    emit(state.copyWith(styleUri: event.styleUri));
-  }
-
-  Future<void> _onToggleOverlay(
-    MapToggleOverlay event,
-    Emitter<MapState> emit,
-  ) async {
-    if (_controller == null) return;
-
-    final overlays = Set<String>.from(state.activeOverlays);
-
-    if (overlays.contains(event.overlayId)) {
-      // Disable: remove from set and remove layers
-      overlays.remove(event.overlayId);
-      await LayerService.removeOverlayById(_controller!, event.overlayId);
-    } else {
-      // Enable: add to set and add layers
-      overlays.add(event.overlayId);
-      await LayerService.addOverlay(_controller!, event.overlayId);
-    }
-
-    emit(state.copyWith(activeOverlays: overlays));
-  }
-
   Future<void> _onFilter(MapFilter event, Emitter<MapState> emit) async {
     if (_controller == null) return;
 
@@ -332,15 +282,6 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         altitudeMin: () => null,
         altitudeMax: () => null,
       ),
-    );
-  }
-
-  Future<void> _onZoom(MapZoom event, Emitter<MapState> emit) async {
-    if (_controller == null) return;
-    final cameraState = await _controller!.getCameraState();
-    await _controller!.easeTo(
-      CameraOptions(zoom: cameraState.zoom + event.delta),
-      MapAnimationOptions(duration: 300),
     );
   }
 }

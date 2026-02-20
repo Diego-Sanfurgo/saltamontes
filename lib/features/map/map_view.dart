@@ -12,17 +12,23 @@ import 'package:saltamontes/features/map/widgets/location_button/location_button
 
 import '../home/bloc/map_bloc.dart';
 import 'widgets/floating_chips.dart';
-import 'widgets/map_style_selector.dart';
+import 'widgets/map_style_selector/map_style_selector.dart';
 import '../../widgets/simple_scale_bar.dart';
-import 'widgets/zoom_buttons.dart';
+import 'widgets/zoom_button/cubit/zoom_button_cubit.dart';
+import 'widgets/zoom_button/zoom_button.dart';
+import 'widgets/map_style_selector/cubit/map_style_cubit.dart';
 
 class MapView extends StatelessWidget {
   const MapView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => LocationCubit(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (context) => LocationCubit()),
+        BlocProvider(create: (context) => MapStyleCubit()),
+        BlocProvider(create: (context) => ZoomButtonCubit()),
+      ],
       child: const _MapViewWidget(),
     );
   }
@@ -90,7 +96,7 @@ class _BodyState extends State<_Body> {
                       right: 16,
                       top: 0,
                       bottom: 0,
-                      child: Center(child: const ZoomButtons()),
+                      child: Center(child: const ZoomButton()),
                     ),
 
                     // Left Side Controls (Centered Vertical)
@@ -244,6 +250,9 @@ class _MapboxWidgetState extends State<_MapboxWidget> {
                 final topPadding = MediaQuery.of(context).padding.top;
                 mapController = controller;
                 context.read<LocationCubit>().setController(controller);
+                context.read<ZoomButtonCubit>().setController(controller);
+                context.read<MapStyleCubit>().setController(controller);
+
                 controller
                   ..logo.updateSettings(LogoSettings(marginBottom: 8))
                   ..attribution.updateSettings(

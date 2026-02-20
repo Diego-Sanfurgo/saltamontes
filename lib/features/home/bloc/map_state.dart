@@ -5,8 +5,6 @@ enum MapStatus { initial, loading, loaded, error }
 class MapState extends Equatable {
   final MapStatus status;
   final List<Place> places;
-  final String styleUri;
-  final Set<String> activeOverlays;
   final Set<String> placeTypeFilter;
   final double? altitudeMin;
   final double? altitudeMax;
@@ -16,8 +14,6 @@ class MapState extends Equatable {
   const MapState({
     this.status = MapStatus.initial,
     this.places = const [],
-    this.styleUri = MapboxStyles.OUTDOORS,
-    this.activeOverlays = const {},
     this.placeTypeFilter = const {},
     this.altitudeMin,
     this.altitudeMax,
@@ -31,8 +27,6 @@ class MapState extends Equatable {
   MapState copyWith({
     MapStatus? status,
     List<Place>? places,
-    String? styleUri,
-    Set<String>? activeOverlays,
     Set<String>? placeTypeFilter,
     double? Function()? altitudeMin,
     double? Function()? altitudeMax,
@@ -42,8 +36,6 @@ class MapState extends Equatable {
     return MapState(
       status: status ?? this.status,
       places: places ?? this.places,
-      styleUri: styleUri ?? this.styleUri,
-      activeOverlays: activeOverlays ?? this.activeOverlays,
       placeTypeFilter: placeTypeFilter ?? this.placeTypeFilter,
       altitudeMin: altitudeMin != null ? altitudeMin() : this.altitudeMin,
       altitudeMax: altitudeMax != null ? altitudeMax() : this.altitudeMax,
@@ -58,8 +50,6 @@ class MapState extends Equatable {
   List<Object?> get props => [
     status,
     places,
-    styleUri,
-    activeOverlays,
     placeTypeFilter,
     altitudeMin,
     altitudeMax,
