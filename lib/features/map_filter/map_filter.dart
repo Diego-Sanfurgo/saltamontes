@@ -21,7 +21,8 @@ class MapFilterView extends StatelessWidget {
               return TextButton.icon(
                 icon: const Icon(Icons.clear_all),
                 label: const Text('Limpiar'),
-                onPressed: () => context.read<MapBloc>().add(MapClearFilters()),
+                onPressed: () =>
+                    context.read<MapBloc>().add(MapFilter(clear: true)),
               );
             },
           ),

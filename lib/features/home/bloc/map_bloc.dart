@@ -28,7 +28,6 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     on<MapStarted>(_onStarted);
     on<MapMoveCamera>(_onMoveCamera);
     on<MapFilter>(_onFilter);
-    on<MapClearFilters>(_onClearFilters);
     on<MapSelectPlace>(_onSelectPlace);
     on<MapDeselectFeature>(_onDeselectFeature);
   }
@@ -241,6 +240,19 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   Future<void> _onFilter(MapFilter event, Emitter<MapState> emit) async {
     if (_controller == null) return;
 
+    // Clear filters
+    if (event.clear) {
+      await LayerService.applyMapFilters(_controller!);
+      emit(
+        state.copyWith(
+          placeTypeFilter: const {},
+          altitudeMin: () => null,
+          altitudeMax: () => null,
+        ),
+      );
+      return;
+    }
+
     final placeTypes = Set<String>.from(state.placeTypeFilter);
     if (event.togglePlaceType != null) {
       if (placeTypes.contains(event.togglePlaceType!)) {
@@ -265,22 +277,6 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         placeTypeFilter: placeTypes,
         altitudeMin: () => newMin,
         altitudeMax: () => newMax,
-      ),
-    );
-  }
-
-  Future<void> _onClearFilters(
-    MapClearFilters event,
-    Emitter<MapState> emit,
-  ) async {
-    if (_controller == null) return;
-
-    await LayerService.applyMapFilters(_controller!);
-    emit(
-      state.copyWith(
-        placeTypeFilter: const {},
-        altitudeMin: () => null,
-        altitudeMax: () => null,
       ),
     );
   }
