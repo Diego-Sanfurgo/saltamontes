@@ -76,7 +76,8 @@ class LocationCubit extends Cubit<LocationState> {
         enableTrackingAndHeading();
         break;
       case CameraMode.compass:
-        emit(state.copyWith(cameraMode: CameraMode.free));
+        emit(state.copyWith(cameraMode: CameraMode.following));
+
         break;
     }
   }
@@ -103,7 +104,10 @@ class LocationCubit extends Cubit<LocationState> {
   /// Actualiza el PuckBearing en el SDK nativo y en el estado.
   void _updatePuckBearing(PuckBearing bearing) {
     _controller?.location.updateSettings(
-      LocationComponentSettings(puckBearing: bearing),
+      LocationComponentSettings(
+        puckBearing: bearing,
+        puckBearingEnabled: bearing == PuckBearing.HEADING,
+      ),
     );
     emit(state.copyWith(puckBearing: bearing));
   }

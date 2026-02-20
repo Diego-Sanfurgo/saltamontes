@@ -58,7 +58,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         puckBearingEnabled: true,
         puckBearing: PuckBearing.HEADING,
         pulsingEnabled: true,
-        locationPuck: LocationPuck(locationPuck2D: LocationPuck2D()),
+        // locationPuck: LocationPuck(locationPuck2D: LocationPuck2D()),
       ),
     );
 
