@@ -1,3 +1,4 @@
+import 'package:bootstrap_icons/bootstrap_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
@@ -132,7 +133,7 @@ class _MapStyleSheetState extends State<_MapStyleSheet> {
                         ),
                         const Spacer(),
                         IconButton(
-                          icon: const Icon(Icons.close),
+                          icon: const Icon(BootstrapIcons.x),
                           onPressed: () => NavigationService.pop(),
                         ),
                       ],

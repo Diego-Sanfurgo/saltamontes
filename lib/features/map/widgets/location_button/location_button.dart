@@ -1,3 +1,4 @@
+import 'package:bootstrap_icons/bootstrap_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'cubit/location_cubit.dart';
@@ -21,11 +22,11 @@ class LocationButton extends StatelessWidget {
   IconData _getIcon(CameraMode mode) {
     switch (mode) {
       case CameraMode.free:
-        return Icons.my_location_outlined;
+        return BootstrapIcons.crosshair;
       case CameraMode.following:
-        return Icons.explore_outlined;
+        return BootstrapIcons.compass;
       case CameraMode.compass:
-        return Icons.explore;
+        return BootstrapIcons.compass_fill;
     }
   }
 }

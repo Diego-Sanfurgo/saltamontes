@@ -1,5 +1,5 @@
+import 'package:bootstrap_icons/bootstrap_icons.dart';
 import 'package:flutter/material.dart';
-import 'package:saltamontes/core/theme/colors.dart';
 import 'package:saltamontes/widgets/animated_search_text.dart';
 
 class MockedSearchBar extends StatelessWidget {
@@ -22,16 +22,11 @@ class MockedSearchBar extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(30),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 15),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
           child: Row(
             spacing: 8,
             children: [
-              Icon(
-                Icons.search_rounded,
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.darkPrimaryColor
-                    : AppColors.lightTextColor,
-              ),
+              Icon(BootstrapIcons.search, size: 18),
 
               AnimatedSearchText(),
 
@@ -43,10 +38,7 @@ class MockedSearchBar extends StatelessWidget {
                 style: IconButton.styleFrom(
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                icon: const Icon(Icons.tune_outlined),
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.darkPrimaryColor
-                    : AppColors.lightTextColor,
+                icon: const Icon(BootstrapIcons.sliders, size: 18),
                 onPressed: onFilterTap,
               ),
             ],

@@ -1,3 +1,4 @@
+import 'package:bootstrap_icons/bootstrap_icons.dart';
 import 'package:flutter/material.dart';
 
 import 'package:go_router/go_router.dart';
@@ -116,7 +117,7 @@ class _BodyState extends State<_Body> {
                       right: 16,
                       child: FloatingActionButton.small(
                         heroTag: Key("layer_FAB"),
-                        child: Icon(Icons.layers_outlined),
+                        child: Icon(BootstrapIcons.layers),
                         onPressed: () => showMapStyleSelector(context),
                       ),
                     ),

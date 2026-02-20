@@ -1,3 +1,4 @@
+import 'package:bootstrap_icons/bootstrap_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -6,9 +7,9 @@ import '../../home/bloc/map_bloc.dart';
 
 const chipData = [
   (MapConstants.peakID, 'Cerros', Icons.volcano_outlined),
-  (MapConstants.lakeID, 'Lagos', Icons.water_drop_outlined),
-  (MapConstants.waterfallID, 'Cascadas', Icons.water_drop_outlined),
-  (MapConstants.parkID, 'Parques', Icons.park_outlined),
+  (MapConstants.lakeID, 'Lagos', BootstrapIcons.water),
+  (MapConstants.waterfallID, 'Cascadas', BootstrapIcons.droplet),
+  (MapConstants.parkID, 'Parques', BootstrapIcons.tree),
 ];
 
 class FloatingChips extends StatelessWidget {

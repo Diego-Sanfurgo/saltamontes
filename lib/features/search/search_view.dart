@@ -1,3 +1,4 @@
+import 'package:bootstrap_icons/bootstrap_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -49,11 +50,14 @@ class _Body extends StatelessWidget {
         SliverPadding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           sliver: SliverAppBar(
-            leading: BackButton(onPressed: () => NavigationService.pop()),
+            leading: IconButton(
+              icon: Icon(BootstrapIcons.arrow_left),
+              onPressed: () => NavigationService.pop(),
+            ),
             actions: [
               IconButton(
                 onPressed: () => NavigationService.push(Routes.MAP_FILTER),
-                icon: Icon(Icons.tune_outlined),
+                icon: Icon(BootstrapIcons.sliders, size: 18),
               ),
             ],
             titleSpacing: 0,

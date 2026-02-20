@@ -1,3 +1,4 @@
+import 'package:bootstrap_icons/bootstrap_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -18,7 +19,7 @@ class ZoomButton extends StatelessWidget {
         children: [
           // Zoom In Button
           _ZoomButton(
-            icon: Icons.add,
+            icon: BootstrapIcons.plus,
             onTap: () => context.read<ZoomButtonCubit>().zoom(1),
             borderRadius: const BorderRadius.vertical(
               top: Radius.circular(16),
@@ -28,7 +29,7 @@ class ZoomButton extends StatelessWidget {
 
           // Zoom Out Button
           _ZoomButton(
-            icon: Icons.remove,
+            icon: BootstrapIcons.dash,
             onTap: () => context.read<ZoomButtonCubit>().zoom(-1),
             borderRadius: const BorderRadius.vertical(
               top: Radius.zero,

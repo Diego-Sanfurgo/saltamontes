@@ -1,3 +1,4 @@
+import 'package:bootstrap_icons/bootstrap_icons.dart';
 import 'package:flutter/material.dart';
 
 import 'package:go_router/go_router.dart';
@@ -39,15 +40,15 @@ class HomeShellView extends StatelessWidget {
             currentIndex: navigationShell.currentIndex,
             items: const [
               BottomNavigationBarItem(
-                icon: Icon(Icons.travel_explore_outlined),
+                icon: Icon(BootstrapIcons.map),
                 label: "Mapa",
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.add_location_alt_outlined),
+                icon: Icon(BootstrapIcons.record_circle),
                 label: "Grabar",
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.person_outline_outlined),
+                icon: Icon(BootstrapIcons.person),
                 label: "Perfil",
               ),
             ],
