@@ -102,6 +102,20 @@ class PlaceProvider {
     }
   }
 
+  Future<Set<Place>> fetchByProtectedAreaId(String protectedAreaId) async {
+    try {
+      final List<Map<String, dynamic>> response = await supabase
+          .from('places')
+          .select('*')
+          .eq('protected_area_id', protectedAreaId)
+          .neq('type', 'park');
+      return response.map((e) => Place.fromJson(e)).toSet();
+    } catch (e) {
+      log(e.toString());
+      return <Place>{};
+    }
+  }
+
   // final String _geoJsonPath = 'assets/data/cerros_v3.geojson';
 
   // Future<Set<Place>> fetchPeaks() async {

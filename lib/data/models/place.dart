@@ -1,7 +1,3 @@
-// To parse this JSON data, do
-//
-//     final place = placeFromJson(jsonString);
-
 import 'dart:convert';
 
 import 'package:latlong2/latlong.dart';
@@ -107,21 +103,46 @@ class Place {
     return name;
   }
 
-  factory Place.fromJson(Map<String, dynamic> json) => Place(
-    id: json["id"],
-    name: json["name"],
-    alt: json["alt"],
-    type: _getType(json["type"]),
-    lng: json["lng"]?.toDouble(),
-    lat: json["lat"]?.toDouble(),
-    geom: PlaceGeometry.fromJson(json["geom"]),
-    stateId: json["state_id"],
-    districtId: json["district_id"],
-    protectedAreaId: json["protected_area_id"],
-    stateName: json["state_name"],
-    districtName: json["district_name"],
-    protectedAreaName: json["protected_area_name"],
-  );
+  factory Place.fromJson(Map<String, dynamic> json) {
+    PlaceType type = _getType(json["type"]);
+    late final String name;
+    if (json["name"] == null) {
+      switch (type) {
+        case PlaceType.peak:
+          name = "Cerro (nombre no verificado)";
+          break;
+        case PlaceType.lake:
+          name = "Lago (nombre no verificado)";
+          break;
+        case PlaceType.pass:
+          name = "Paso (nombre no verificado)";
+          break;
+        case PlaceType.waterfall:
+          name = "Cascada (nombre no verificado)";
+          break;
+        case PlaceType.park:
+          name = "Parque (nombre no verificado)";
+          break;
+      }
+    } else {
+      name = json["name"];
+    }
+    return Place(
+      id: json["id"],
+      name: name,
+      alt: json["alt"],
+      type: type,
+      lng: json["lng"]?.toDouble(),
+      lat: json["lat"]?.toDouble(),
+      geom: PlaceGeometry.fromJson(json["geom"]),
+      stateId: json["state_id"],
+      districtId: json["district_id"],
+      protectedAreaId: json["protected_area_id"],
+      stateName: json["state_name"],
+      districtName: json["district_name"],
+      protectedAreaName: json["protected_area_name"],
+    );
+  }
 
   Map<String, dynamic> toJson() => {
     "id": id,
@@ -181,6 +202,8 @@ PlaceType _getType(String type) {
       return PlaceType.pass;
     case 'waterfall':
       return PlaceType.waterfall;
+    case 'park':
+      return PlaceType.park;
     default:
       return PlaceType.peak;
   }

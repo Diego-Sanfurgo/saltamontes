@@ -31,7 +31,7 @@ class ResultList extends StatelessWidget {
         };
 
         return ListTile(
-          title: Text(place.name),
+          title: Text(place.name ?? 'Sin nombre'),
           subtitle: subtitle != null
               ? Text(subtitle, overflow: TextOverflow.ellipsis, maxLines: 1)
               : null,

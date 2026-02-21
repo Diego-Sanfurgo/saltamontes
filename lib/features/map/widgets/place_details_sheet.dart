@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:saltamontes/data/models/place.dart';
+import 'package:saltamontes/data/repositories/place_repository.dart';
 
 class PlaceDetailsSheet extends StatefulWidget {
   const PlaceDetailsSheet({
@@ -59,6 +61,7 @@ class _PlaceDetailsSheetState extends State<PlaceDetailsSheet> {
               ),
               SliverToBoxAdapter(child: const Divider()),
               SliverToBoxAdapter(child: _Description()),
+              SliverToBoxAdapter(child: _ParkPOIs(place: widget.place)),
               SliverToBoxAdapter(child: _PhotoCarousel()),
               SliverToBoxAdapter(child: _WeatherForecast()),
               // Extra bottom padding
@@ -132,7 +135,7 @@ class _Header extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  place.name,
+                  place.name ?? 'Sin nombre',
                   style: textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -205,6 +208,100 @@ class _Description extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ParkPOIs extends StatelessWidget {
+  const _ParkPOIs({required this.place});
+  final Place place;
+
+  @override
+  Widget build(BuildContext context) {
+    if (place.type != PlaceType.park || place.protectedAreaId == null) {
+      return const SizedBox.shrink();
+    }
+
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return FutureBuilder<Set<Place>>(
+      future: context.read<PlaceRepository>().getByProtectedAreaId(
+        place.protectedAreaId!,
+      ),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        final pois = snapshot.data!.toList();
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Lugares de interés',
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 120,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: pois.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    final poi = pois[index];
+                    return Container(
+                      width: 140,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            poi.type == PlaceType.lake
+                                ? Icons.water
+                                : poi.type == PlaceType.waterfall
+                                ? Icons.water_drop
+                                : Icons.terrain,
+                            color: colorScheme.primary,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            poi.name ?? 'Sin nombre',
+                            style: textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 2,
+                            textAlign: TextAlign.center,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (poi.alt != null)
+                            Text(
+                              '${poi.alt}m',
+                              style: textTheme.labelSmall?.copyWith(
+                                color: colorScheme.primary,
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
     );
   }
 }

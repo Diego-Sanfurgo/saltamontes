@@ -67,6 +67,11 @@ const _overlays = [
     overlayId: MapConstants.waterSourceID,
     icon: Icons.water_drop_outlined,
   ),
+  _OverlayOption(
+    label: 'Áreas protegidas',
+    overlayId: MapConstants.parkSourceID,
+    icon: Icons.park_outlined,
+  ),
 ];
 
 /// Shows a [DraggableScrollableSheet] with map style options and overlay toggles.

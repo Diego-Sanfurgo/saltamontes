@@ -6,6 +6,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 import 'package:saltamontes/core/services/navigation_service.dart';
+import 'package:saltamontes/data/providers/place_provider.dart';
+import 'package:saltamontes/data/repositories/place_repository.dart';
 import 'package:saltamontes/features/map/widgets/mocked_search_bar.dart';
 import 'package:saltamontes/features/map/widgets/place_details_sheet.dart';
 import 'package:saltamontes/features/map/widgets/location_button/cubit/location_cubit.dart';
@@ -24,13 +26,16 @@ class MapView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(create: (context) => LocationCubit()),
-        BlocProvider(create: (context) => MapStyleCubit()),
-        BlocProvider(create: (context) => ZoomButtonCubit()),
-      ],
-      child: const _MapViewWidget(),
+    return RepositoryProvider(
+      create: (context) => PlaceRepository(PlaceProvider()),
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(create: (context) => LocationCubit()),
+          BlocProvider(create: (context) => MapStyleCubit()),
+          BlocProvider(create: (context) => ZoomButtonCubit()),
+        ],
+        child: const _MapViewWidget(),
+      ),
     );
   }
 }

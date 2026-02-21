@@ -70,4 +70,13 @@ class PlaceRepository {
       return null;
     }
   }
+
+  Future<Set<Place>> getByProtectedAreaId(String protectedAreaId) async {
+    try {
+      return await _provider.fetchByProtectedAreaId(protectedAreaId);
+    } on Exception catch (e) {
+      log(e.toString());
+      return {};
+    }
+  }
 }

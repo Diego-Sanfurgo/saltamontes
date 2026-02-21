@@ -19,6 +19,7 @@ class LayerService {
       MapConstants.mountainPassID,
       MapConstants.peakID,
       MapConstants.waterfallID,
+      MapConstants.parkID,
     ];
     for (final String type in placeTypes) {
       await addPlaceImageToStyle(mapboxMap, type);
@@ -296,6 +297,45 @@ class LayerService {
     );
   }
 
+  static Future<void> addParkArea(MapboxMap controller) async {
+    const String sourceId = MapConstants.parkSourceID;
+    const String layerId = MapConstants.parkLayerID;
+
+    if (await controller.style.styleSourceExists(sourceId)) return;
+
+    await controller.style.addSource(
+      VectorSource(
+        id: sourceId,
+        tiles: [MapConstants.protectedAreasMVT],
+        maxzoom: 22,
+      ),
+    );
+
+    await controller.style.addLayerAt(
+      LineLayer(
+        id: MapConstants.parkLineLayerID,
+        sourceId: sourceId,
+        sourceLayer: MapConstants.parkSourceLayerID,
+        lineColor: Colors.green[900]!.toARGB32(),
+        lineWidth: 1.0,
+        lineOpacity: 1.0,
+      ),
+      LayerPosition(below: MapConstants.placesClusterLayerID),
+    );
+
+    await controller.style.addLayerAt(
+      FillLayer(
+        id: layerId,
+        sourceId: sourceId,
+        sourceLayer: MapConstants.parkSourceLayerID,
+        fillColor: Colors.green.toARGB32(),
+        fillOpacity: 0.25, // Translucent dark green
+        fillOutlineColor: Colors.green[800]!.toARGB32(),
+      ),
+      LayerPosition(below: MapConstants.parkLineLayerID),
+    );
+  }
+
   /// Removes an overlay by removing its [layerIds] first, then the [sourceId].
   static Future<void> removeOverlay(
     MapboxMap controller,
@@ -329,6 +369,8 @@ class LayerService {
       await addMountainAreaAll(controller);
     } else if (featureType == MapConstants.lakeID) {
       await addWaterArea(controller);
+    } else if (featureType == MapConstants.parkID) {
+      await addParkArea(controller);
     }
 
     final filter = [
@@ -345,6 +387,9 @@ class LayerService {
     if (featureType == MapConstants.lakeID) {
       fillColor = "#4FA0D8"; // Brighter blue
       lineColor = "#1D5C8A"; // Darker blue outline
+    } else if (featureType == MapConstants.parkID) {
+      fillColor = "#2E8B57"; // SeaGreen
+      lineColor = "#006400"; // DarkGreen
     }
 
     await controller.style.setStyleLayerProperties(
@@ -386,7 +431,13 @@ class LayerService {
           fillLayerId: MapConstants.waterLayerID,
           lineLayerId: MapConstants.waterLineLayerID,
         );
-      // Add other cases here (park, volcano) when they are ready
+      case MapConstants.parkID:
+        return (
+          sourceId: MapConstants.parkSourceID,
+          fillLayerId: MapConstants.parkLayerID,
+          lineLayerId: MapConstants.parkLineLayerID,
+        );
+      // Add other cases here (volcano) when they are ready
       default:
         return null; // Return null if not configured
     }
@@ -412,6 +463,9 @@ class LayerService {
       case MapConstants.waterSourceID:
         await addWaterArea(controller);
         break;
+      case MapConstants.parkSourceID:
+        await addParkArea(controller);
+        break;
       default:
         log('Unknown overlay: $overlayId');
     }
@@ -432,6 +486,12 @@ class LayerService {
         await removeOverlay(controller, MapConstants.waterSourceID, [
           MapConstants.waterLayerID,
           MapConstants.waterLineLayerID,
+        ]);
+        break;
+      case MapConstants.parkSourceID:
+        await removeOverlay(controller, MapConstants.parkSourceID, [
+          MapConstants.parkLayerID,
+          MapConstants.parkLineLayerID,
         ]);
         break;
       default:

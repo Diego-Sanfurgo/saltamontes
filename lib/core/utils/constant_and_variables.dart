@@ -47,6 +47,12 @@ class MapConstants {
   static const String waterSourceLayerID = 'water';
   static const String waterLineLayerID = '$waterID-area-lines';
 
+  // Protected Areas (Parks)
+  static const String parkSourceID = '$parkID-mvt-source';
+  static const String parkLayerID = '$parkID-fill-layer';
+  static const String parkSourceLayerID = 'protected_areas';
+  static const String parkLineLayerID = '$parkID-area-lines';
+
   // Tracking
   static const String trackingSourceID = "$trackingID-source";
   static const String trackingLayerID = "$trackingID-line";
@@ -58,4 +64,6 @@ class MapConstants {
       "${_supabaseFunctions}mvt_peak_areas/{z}/{x}/{y}";
   static const String placesMVT = "${_supabaseFunctions}mvt_places/{z}/{x}/{y}";
   static const String waterMVT = "${_supabaseFunctions}mvt-water/{z}/{x}/{y}";
+  static const String protectedAreasMVT =
+      "${_supabaseFunctions}mvt-protected-areas/{z}/{x}/{y}";
 }
