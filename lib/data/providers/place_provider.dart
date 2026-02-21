@@ -115,29 +115,4 @@ class PlaceProvider {
       return <Place>{};
     }
   }
-
-  // final String _geoJsonPath = 'assets/data/cerros_v3.geojson';
-
-  // Future<Set<Place>> fetchPeaks() async {
-  //   try {
-  //     final response = await rootBundle.loadString(_geoJsonPath);
-
-  //     final List features = jsonDecode(response)['features'] as List;
-  //     final List<Map> data = features.map((e) => e as Map).toList();
-  //     return data.map((e) => Place.fromJson(e as Map<String, dynamic>)).toSet();
-  //   } catch (e) {
-  //     log(e.toString());
-  //     return <Place>{};
-  //   }
-  // }
-
-  // Future<dynamic> fetchPeaksJson({bool asString = false}) async {
-  //   try {
-  //     final response = await rootBundle.loadString(_geoJsonPath);
-  //     return asString ? response : jsonDecode(response);
-  //   } catch (e) {
-  //     log(e.toString());
-  //     return '';
-  //   }
-  // }
 }

@@ -135,7 +135,7 @@ class _Header extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  place.name ?? 'Sin nombre',
+                  place.name,
                   style: textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -276,7 +276,7 @@ class _ParkPOIs extends StatelessWidget {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            poi.name ?? 'Sin nombre',
+                            poi.name,
                             style: textTheme.bodySmall?.copyWith(
                               fontWeight: FontWeight.w600,
                             ),
