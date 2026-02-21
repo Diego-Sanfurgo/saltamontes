@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:saltamontes/features/home/bloc/map_bloc.dart';
+import 'package:saltamontes/features/map_filter/cubit/map_filter_cubit.dart';
 
 const double _altMin = 0;
 const double _altMax = 5000;
@@ -24,7 +24,7 @@ class _AltitudeFiltersState extends State<AltitudeFilters> {
   @override
   void initState() {
     super.initState();
-    final state = context.read<MapBloc>().state;
+    final state = context.read<MapFilterCubit>().state;
     _sliderMin = state.altitudeMin ?? _altMin;
     _sliderMax = state.altitudeMax ?? _altMax;
 
@@ -63,31 +63,34 @@ class _AltitudeFiltersState extends State<AltitudeFilters> {
   void _onSliderChangeEnd(RangeValues values) {
     final min = values.start == _altMin ? null : values.start;
     final max = values.end == _altMax ? null : values.end;
-    context.read<MapBloc>().add(MapFilter(minAlt: min, maxAlt: max));
+    context.read<MapFilterCubit>().updateAltitudeFilters(
+      minAlt: min,
+      maxAlt: max,
+    );
   }
 
-  void _onTextFieldSubmitted() {
+  void _onTextFieldChanged() {
     final minText = _minController.text.trim();
     final maxText = _maxController.text.trim();
 
     final min = minText.isEmpty ? null : double.tryParse(minText);
     final max = maxText.isEmpty ? null : double.tryParse(maxText);
 
-    // Clamp and update slider
+    double newSliderMin = (min ?? _altMin).clamp(_altMin, _altMax);
+    double newSliderMax = (max ?? _altMax).clamp(_altMin, _altMax);
+
+    if (newSliderMin > newSliderMax) {
+      newSliderMin = newSliderMax;
+    }
+
     setState(() {
-      _sliderMin = (min ?? _altMin).clamp(_altMin, _altMax);
-      _sliderMax = (max ?? _altMax).clamp(_altMin, _altMax);
-      // Ensure min <= max
-      if (_sliderMin > _sliderMax) {
-        _sliderMin = _sliderMax;
-      }
+      _sliderMin = newSliderMin;
+      _sliderMax = newSliderMax;
     });
 
-    context.read<MapBloc>().add(
-      MapFilter(
-        minAlt: min != null ? _sliderMin : null,
-        maxAlt: max != null ? _sliderMax : null,
-      ),
+    context.read<MapFilterCubit>().updateAltitudeFilters(
+      minAlt: min != null ? newSliderMin : null,
+      maxAlt: max != null ? newSliderMax : null,
     );
   }
 
@@ -95,22 +98,38 @@ class _AltitudeFiltersState extends State<AltitudeFilters> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return BlocListener<MapBloc, MapState>(
+    return BlocListener<MapFilterCubit, MapFilterState>(
       listenWhen: (prev, curr) =>
           prev.altitudeMin != curr.altitudeMin ||
           prev.altitudeMax != curr.altitudeMax,
       listener: (context, state) {
-        // Sync UI when filters are cleared externally
+        // Sync UI when filters are cleared externally or clamped
         setState(() {
           _sliderMin = state.altitudeMin ?? _altMin;
           _sliderMax = state.altitudeMax ?? _altMax;
         });
-        _minController.text = state.altitudeMin != null
-            ? state.altitudeMin!.round().toString()
-            : '';
-        _maxController.text = state.altitudeMax != null
-            ? state.altitudeMax!.round().toString()
-            : '';
+
+        final currentMinVal = double.tryParse(_minController.text.trim());
+        if (currentMinVal != state.altitudeMin) {
+          final newVal = state.altitudeMin != null
+              ? state.altitudeMin!.round().toString()
+              : '';
+          _minController.value = TextEditingValue(
+            text: newVal,
+            selection: TextSelection.collapsed(offset: newVal.length),
+          );
+        }
+
+        final currentMaxVal = double.tryParse(_maxController.text.trim());
+        if (currentMaxVal != state.altitudeMax) {
+          final newVal = state.altitudeMax != null
+              ? state.altitudeMax!.round().toString()
+              : '';
+          _maxController.value = TextEditingValue(
+            text: newVal,
+            selection: TextSelection.collapsed(offset: newVal.length),
+          );
+        }
       },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -149,7 +168,7 @@ class _AltitudeFiltersState extends State<AltitudeFilters> {
                     border: OutlineInputBorder(),
                     isDense: true,
                   ),
-                  onSubmitted: (_) => _onTextFieldSubmitted(),
+                  onChanged: (_) => _onTextFieldChanged(),
                 ),
               ),
               const SizedBox(width: 16),
@@ -163,7 +182,7 @@ class _AltitudeFiltersState extends State<AltitudeFilters> {
                     border: OutlineInputBorder(),
                     isDense: true,
                   ),
-                  onSubmitted: (_) => _onTextFieldSubmitted(),
+                  onChanged: (_) => _onTextFieldChanged(),
                 ),
               ),
             ],

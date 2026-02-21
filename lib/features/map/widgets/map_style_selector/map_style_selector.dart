@@ -1,10 +1,12 @@
-import 'package:bootstrap_icons/bootstrap_icons.dart';
 import 'package:flutter/material.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:bootstrap_icons/bootstrap_icons.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+
 import 'package:saltamontes/core/services/navigation_service.dart';
 import 'package:saltamontes/core/utils/constant_and_variables.dart';
-import 'package:saltamontes/features/home/bloc/map_bloc.dart';
+import 'package:saltamontes/features/map_filter/cubit/map_filter_cubit.dart';
 import 'package:saltamontes/features/map/widgets/map_style_selector/cubit/map_style_cubit.dart';
 
 // ── Data models ──
@@ -79,7 +81,7 @@ const _overlays = [
 /// Returns a [MapStyleSelectorResult] or `null` if dismissed.
 void showMapStyleSelector(BuildContext context) {
   final styleCubit = context.read<MapStyleCubit>();
-  final mapBloc = context.read<MapBloc>();
+  final mapFilterCubit = context.read<MapFilterCubit>();
 
   showModalBottomSheet(
     context: context,
@@ -88,7 +90,7 @@ void showMapStyleSelector(BuildContext context) {
     builder: (_) => MultiBlocProvider(
       providers: [
         BlocProvider.value(value: styleCubit),
-        BlocProvider.value(value: mapBloc),
+        BlocProvider.value(value: mapFilterCubit),
       ],
       child: const _MapStyleSheet(),
     ),
@@ -170,12 +172,14 @@ class _MapStyleSheetState extends State<_MapStyleSheet> {
                         icon: style.icon,
                         isSelected: isSelected,
                         onTap: () {
-                          final mapState = context.read<MapBloc>().state;
+                          final filterState = context
+                              .read<MapFilterCubit>()
+                              .state;
                           cubit.onChangeStyle(
                             style.styleUri,
-                            placeTypes: mapState.placeTypeFilter,
-                            altitudeMin: mapState.altitudeMin,
-                            altitudeMax: mapState.altitudeMax,
+                            placeTypes: filterState.placeTypeFilter,
+                            altitudeMin: filterState.altitudeMin,
+                            altitudeMax: filterState.altitudeMax,
                           );
                         },
                       );

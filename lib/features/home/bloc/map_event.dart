@@ -28,24 +28,6 @@ class MapMoveCamera extends MapEvent {
   List<Object?> get props => [zoomLevel, targetLocation, coordinates];
 }
 
-class MapFilter extends MapEvent {
-  MapFilter({
-    this.togglePlaceType,
-    this.minAlt,
-    this.maxAlt,
-    this.clear = false,
-  });
-
-  /// The type to toggle in the filter set (e.g. 'peak', 'lake').
-  final String? togglePlaceType;
-  final double? minAlt;
-  final double? maxAlt;
-  final bool clear;
-
-  @override
-  List<Object?> get props => [togglePlaceType, minAlt, maxAlt];
-}
-
 class MapDeselectFeature extends MapEvent {
   @override
   List<Object?> get props => [];

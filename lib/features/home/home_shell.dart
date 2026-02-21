@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:saltamontes/data/providers/place_provider.dart';
 import 'package:saltamontes/data/repositories/map_repository.dart';
 import 'package:saltamontes/data/repositories/place_repository.dart';
+import 'package:saltamontes/features/map_filter/cubit/map_filter_cubit.dart';
 import 'bloc/map_bloc.dart';
 
 class HomeShellView extends StatelessWidget {
@@ -31,35 +32,38 @@ class HomeShellView extends StatelessWidget {
       child: BlocProvider(
         create: (context) =>
             MapBloc(PlaceRepository(PlaceProvider()))..add(MapStarted()),
-        child: Scaffold(
-          // El body es el navigationShell mismo.
-          // GoRouter se encarga de usar un IndexedStack internamente.
-          body: navigationShell,
-          bottomNavigationBar: BottomNavigationBar(
-            // Usamos el índice actual del shell
-            currentIndex: navigationShell.currentIndex,
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(BootstrapIcons.map),
-                label: "Mapa",
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(BootstrapIcons.record_circle),
-                label: "Grabar",
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(BootstrapIcons.person),
-                label: "Perfil",
-              ),
-            ],
-            onTap: (index) {
-              // Esta función es mágica: cambia de rama sin perder el estado
-              navigationShell.goBranch(
-                index,
-                // Soporte opcional: si tocas el tab activo, vuelve al inicio de esa rama
-                initialLocation: index == navigationShell.currentIndex,
-              );
-            },
+        child: BlocProvider(
+          create: (context) => MapFilterCubit(),
+          child: Scaffold(
+            // El body es el navigationShell mismo.
+            // GoRouter se encarga de usar un IndexedStack internamente.
+            body: navigationShell,
+            bottomNavigationBar: BottomNavigationBar(
+              // Usamos el índice actual del shell
+              currentIndex: navigationShell.currentIndex,
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(BootstrapIcons.map),
+                  label: "Mapa",
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(BootstrapIcons.record_circle),
+                  label: "Grabar",
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(BootstrapIcons.person),
+                  label: "Perfil",
+                ),
+              ],
+              onTap: (index) {
+                // Esta función es mágica: cambia de rama sin perder el estado
+                navigationShell.goBranch(
+                  index,
+                  // Soporte opcional: si tocas el tab activo, vuelve al inicio de esa rama
+                  initialLocation: index == navigationShell.currentIndex,
+                );
+              },
+            ),
           ),
         ),
       ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:saltamontes/features/home/bloc/map_bloc.dart';
+import 'package:saltamontes/features/map_filter/cubit/map_filter_cubit.dart';
 import 'package:saltamontes/features/map_filter/widgets/altitude_filters.dart';
 import 'package:saltamontes/features/map_filter/widgets/type_filters.dart';
 
@@ -14,15 +14,14 @@ class MapFilterView extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Filtros'),
         actions: [
-          BlocSelector<MapBloc, MapState, bool>(
+          BlocSelector<MapFilterCubit, MapFilterState, bool>(
             selector: (state) => state.hasActiveFilters,
             builder: (context, hasFilters) {
               if (!hasFilters) return const SizedBox.shrink();
               return TextButton.icon(
                 icon: const Icon(Icons.clear_all),
                 label: const Text('Limpiar'),
-                onPressed: () =>
-                    context.read<MapBloc>().add(MapFilter(clear: true)),
+                onPressed: () => context.read<MapFilterCubit>().clearFilters(),
               );
             },
           ),
@@ -38,16 +37,34 @@ class _Body extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const TypeFilters(),
-          const _SectionDivider(),
-          const AltitudeFilters(),
-        ],
-      ),
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                TypeFilters(),
+                _SectionDivider(),
+                AltitudeFilters(),
+              ],
+            ),
+          ),
+        ),
+        SafeArea(
+          minimum: const EdgeInsets.all(16),
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                context.read<MapFilterCubit>().applyFilters();
+              },
+              child: const Text('Aplicar'),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

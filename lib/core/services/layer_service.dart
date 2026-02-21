@@ -535,79 +535,49 @@ class LayerService {
       1,
     ];
 
-    // Build additional conditions
-    final List<dynamic> extraConditions = [];
+    // Restore original filters (no extra conditions)
+    await controller.style.setStyleLayerProperty(
+      pointsLayerID,
+      'filter',
+      pointsBaseFilter,
+    );
+    await controller.style.setStyleLayerProperty(
+      clusterLayerID,
+      'filter',
+      clusterBaseFilter,
+    );
+    await controller.style.setStyleLayerProperty(
+      countLayerID,
+      'filter',
+      clusterBaseFilter,
+    );
 
-    // Type filter (multi-select)
+    // Update the Mapbox VectorSource URL with dynamic query parameters
+    String tileUrl = MapConstants.placesMVT;
+    final List<String> queryParams = [];
+
     if (placeTypes.isNotEmpty) {
-      extraConditions.add([
-        "in",
-        ["get", "type"],
-        ["literal", placeTypes.toList()],
-      ]);
+      queryParams.add('types=${placeTypes.join(',')}');
     }
-
-    // Altitude filters
     if (altitudeMin != null) {
-      extraConditions.add([
-        ">=",
-        [
-          "to-number",
-          ["get", "alt"],
-          0,
-        ],
-        altitudeMin,
-      ]);
+      queryParams.add('min_alt=$altitudeMin');
     }
     if (altitudeMax != null) {
-      extraConditions.add([
-        "<=",
-        [
-          "to-number",
-          ["get", "alt"],
-          0,
-        ],
-        altitudeMax,
-      ]);
+      queryParams.add('max_alt=$altitudeMax');
     }
 
-    if (extraConditions.isNotEmpty) {
-      // Build combined filter: ["all", baseFilter, ...extraConditions]
-      final pointsFilter = ["all", pointsBaseFilter, ...extraConditions];
-      final clusterFilter = ["all", clusterBaseFilter, ...extraConditions];
+    if (queryParams.isNotEmpty) {
+      tileUrl += '?${queryParams.join('&')}';
+    }
 
-      await controller.style.setStyleLayerProperty(
-        pointsLayerID,
-        'filter',
-        pointsFilter,
+    try {
+      await controller.style.setStyleSourceProperty(
+        MapConstants.placesSourceID,
+        'tiles',
+        [tileUrl],
       );
-      await controller.style.setStyleLayerProperty(
-        clusterLayerID,
-        'filter',
-        clusterFilter,
-      );
-      await controller.style.setStyleLayerProperty(
-        countLayerID,
-        'filter',
-        clusterFilter,
-      );
-    } else {
-      // Restore original filters (no extra conditions)
-      await controller.style.setStyleLayerProperty(
-        pointsLayerID,
-        'filter',
-        pointsBaseFilter,
-      );
-      await controller.style.setStyleLayerProperty(
-        clusterLayerID,
-        'filter',
-        clusterBaseFilter,
-      );
-      await controller.style.setStyleLayerProperty(
-        countLayerID,
-        'filter',
-        clusterBaseFilter,
-      );
+    } catch (e) {
+      log('Error updating source tiles: $e');
     }
   }
 }

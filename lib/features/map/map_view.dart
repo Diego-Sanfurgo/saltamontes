@@ -13,7 +13,8 @@ import 'package:saltamontes/features/map/widgets/place_details_sheet.dart';
 import 'package:saltamontes/features/map/widgets/location_button/cubit/location_cubit.dart';
 import 'package:saltamontes/features/map/widgets/location_button/location_button.dart';
 
-import '../home/bloc/map_bloc.dart';
+import 'package:saltamontes/features/home/bloc/map_bloc.dart';
+import 'package:saltamontes/features/map_filter/cubit/map_filter_cubit.dart';
 import 'widgets/floating_chips.dart';
 import 'widgets/map_style_selector/map_style_selector.dart';
 import '../../widgets/simple_scale_bar.dart';
@@ -258,6 +259,7 @@ class _MapboxWidgetState extends State<_MapboxWidget> {
                 context.read<LocationCubit>().setController(controller);
                 context.read<ZoomButtonCubit>().setController(controller);
                 context.read<MapStyleCubit>().setController(controller);
+                context.read<MapFilterCubit>().setController(controller);
 
                 controller
                   ..logo.updateSettings(LogoSettings(marginBottom: 8))

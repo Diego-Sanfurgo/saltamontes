@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:saltamontes/core/utils/constant_and_variables.dart';
-import '../../home/bloc/map_bloc.dart';
+import 'package:saltamontes/features/map_filter/cubit/map_filter_cubit.dart';
 
 const chipData = [
   (MapConstants.peakID, 'Cerros', Icons.volcano_outlined),
@@ -19,7 +19,7 @@ class FloatingChips extends StatelessWidget {
   Widget build(BuildContext context) {
     final double height = MediaQuery.sizeOf(context).height * 0.05;
 
-    return BlocSelector<MapBloc, MapState, Set<String>>(
+    return BlocSelector<MapFilterCubit, MapFilterState, Set<String>>(
       selector: (state) => state.placeTypeFilter,
       builder: (context, activeFilters) {
         return SizedBox(
@@ -36,9 +36,11 @@ class FloatingChips extends StatelessWidget {
                   shape: StadiumBorder(),
                   selected: isSelected,
                   avatar: isSelected ? null : Icon(icon),
-                  onSelected: (_) => BlocProvider.of<MapBloc>(
-                    context,
-                  ).add(MapFilter(togglePlaceType: type)),
+                  onSelected: (_) {
+                    final cubit = context.read<MapFilterCubit>();
+                    cubit.togglePlaceType(type);
+                    cubit.applyFilters();
+                  },
                   label: Text(label),
                 );
               }).toList(),
