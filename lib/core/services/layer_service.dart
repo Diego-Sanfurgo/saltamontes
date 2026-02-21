@@ -224,6 +224,8 @@ class LayerService {
     const String sourceId = MapConstants.mountainsSourceID;
     const String layerId = MapConstants.mountainsLayerID;
 
+    if (await controller.style.styleSourceExists(sourceId)) return;
+
     await controller.style.addSource(
       VectorSource(
         id: sourceId,
@@ -259,6 +261,41 @@ class LayerService {
     );
   }
 
+  static Future<void> addWaterArea(MapboxMap controller) async {
+    const String sourceId = MapConstants.waterSourceID;
+    const String layerId = MapConstants.waterLayerID;
+
+    if (await controller.style.styleSourceExists(sourceId)) return;
+
+    await controller.style.addSource(
+      VectorSource(id: sourceId, tiles: [MapConstants.waterMVT], maxzoom: 22),
+    );
+
+    await controller.style.addLayerAt(
+      LineLayer(
+        id: MapConstants.waterLineLayerID,
+        sourceId: sourceId,
+        sourceLayer: MapConstants.waterSourceLayerID,
+        lineColor: Colors.blue[900]!.toARGB32(),
+        lineWidth: 1.0,
+        lineOpacity: 1.0,
+      ),
+      LayerPosition(below: MapConstants.placesClusterLayerID),
+    );
+
+    await controller.style.addLayerAt(
+      FillLayer(
+        id: layerId,
+        sourceId: sourceId,
+        sourceLayer: MapConstants.waterSourceLayerID,
+        fillColor: Colors.blue.toARGB32(),
+        fillOpacity: 0.5,
+        fillOutlineColor: Colors.blue[800]!.toARGB32(),
+      ),
+      LayerPosition(below: MapConstants.waterLineLayerID),
+    );
+  }
+
   /// Removes an overlay by removing its [layerIds] first, then the [sourceId].
   static Future<void> removeOverlay(
     MapboxMap controller,
@@ -287,9 +324,11 @@ class LayerService {
       return;
     }
 
-    // Ensure the layer is added (e.g., mountains)
+    // Ensure the layer is added
     if (featureType == MapConstants.peakID) {
       await addMountainAreaAll(controller);
+    } else if (featureType == MapConstants.lakeID) {
+      await addWaterArea(controller);
     }
 
     final filter = [
@@ -298,15 +337,25 @@ class LayerService {
       ["literal", featureIds],
     ];
 
+    // Default style values for selection
+    String fillColor = "#729B79";
+    String lineColor = "#FFFFFF";
+
+    // Override colors based on type
+    if (featureType == MapConstants.lakeID) {
+      fillColor = "#4FA0D8"; // Brighter blue
+      lineColor = "#1D5C8A"; // Darker blue outline
+    }
+
     await controller.style.setStyleLayerProperties(
       layerInfo.fillLayerId,
-      jsonEncode({"filter": filter, "fill-color": "#729B79"}),
+      jsonEncode({"filter": filter, "fill-color": fillColor}),
     );
 
     // Also filter and style the line layer for selection
     await controller.style.setStyleLayerProperties(
       layerInfo.lineLayerId,
-      jsonEncode({"filter": filter, "line-color": "#FFFFFF", "line-width": 4}),
+      jsonEncode({"filter": filter, "line-color": lineColor, "line-width": 4}),
     );
   }
 
@@ -331,7 +380,13 @@ class LayerService {
           fillLayerId: MapConstants.mountainsLayerID,
           lineLayerId: MapConstants.mountainsLineLayerID,
         );
-      // Add other cases here (lake, park) when they are ready
+      case MapConstants.lakeID:
+        return (
+          sourceId: MapConstants.waterSourceID,
+          fillLayerId: MapConstants.waterLayerID,
+          lineLayerId: MapConstants.waterLineLayerID,
+        );
+      // Add other cases here (park, volcano) when they are ready
       default:
         return null; // Return null if not configured
     }
@@ -353,6 +408,10 @@ class LayerService {
     switch (overlayId) {
       case MapConstants.mountainsSourceID:
         await addMountainAreaAll(controller);
+        break;
+      case MapConstants.waterSourceID:
+        await addWaterArea(controller);
+        break;
       default:
         log('Unknown overlay: $overlayId');
     }
@@ -368,6 +427,13 @@ class LayerService {
           MapConstants.mountainsLayerID,
           MapConstants.mountainsLineLayerID,
         ]);
+        break;
+      case MapConstants.waterSourceID:
+        await removeOverlay(controller, MapConstants.waterSourceID, [
+          MapConstants.waterLayerID,
+          MapConstants.waterLineLayerID,
+        ]);
+        break;
       default:
         log('Unknown overlay: $overlayId');
     }

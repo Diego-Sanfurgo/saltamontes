@@ -62,6 +62,11 @@ const _overlays = [
     overlayId: MapConstants.mountainsSourceID,
     icon: Icons.landscape,
   ),
+  _OverlayOption(
+    label: 'Cuerpos de agua',
+    overlayId: MapConstants.waterSourceID,
+    icon: Icons.water_drop_outlined,
+  ),
 ];
 
 /// Shows a [DraggableScrollableSheet] with map style options and overlay toggles.
