@@ -29,6 +29,8 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     on<MapMoveCamera>(_onMoveCamera);
     on<MapSelectPlace>(_onSelectPlace);
     on<MapDeselectFeature>(_onDeselectFeature);
+    on<MapShowTrackOverlay>(_onShowTrackOverlay);
+    on<MapClearTrackOverlay>(_onClearTrackOverlay);
   }
 
   final PlaceRepository _placeRepository;
@@ -234,5 +236,34 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       ),
       MapAnimationOptions(duration: 500),
     );
+  }
+
+  // ─── Track Overlay (Module 3) ───
+
+  Future<void> _onShowTrackOverlay(
+    MapShowTrackOverlay event,
+    Emitter<MapState> emit,
+  ) async {
+    if (_controller == null) return;
+
+    final geojsonStr = jsonEncode({
+      'type': 'FeatureCollection',
+      'features': [
+        {'type': 'Feature', 'geometry': event.geojson, 'properties': {}},
+      ],
+    });
+
+    await LayerService.addTrackOverlay(_controller!, geojsonStr);
+    emit(state.copyWith(trackOverlayGeoJson: () => event.geojson));
+  }
+
+  Future<void> _onClearTrackOverlay(
+    MapClearTrackOverlay event,
+    Emitter<MapState> emit,
+  ) async {
+    if (_controller == null) return;
+
+    await LayerService.removeTrackOverlay(_controller!);
+    emit(state.copyWith(trackOverlayGeoJson: () => null));
   }
 }

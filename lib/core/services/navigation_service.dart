@@ -31,7 +31,7 @@ class NavigationService {
   }
 }
 
-enum Routes { HOME, MAP, MAP_FILTER, PROFILE, SEARCH, TRACKING_MAP }
+enum Routes { HOME, MAP, MAP_FILTER, PROFILE, SEARCH, TRACKING_MAP, EXCURSION }
 
 String _getPath(Routes route, {String? parameter}) {
   switch (route) {
@@ -47,5 +47,7 @@ String _getPath(Routes route, {String? parameter}) {
       return '/tracking_map';
     case Routes.MAP_FILTER:
       return '/map/filter';
+    case Routes.EXCURSION:
+      return '/tracking_map/excursion';
   }
 }

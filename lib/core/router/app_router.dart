@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:saltamontes/core/utils/constant_and_variables.dart';
 import 'package:saltamontes/features/tracking_map/tracking_map.dart';
+import 'package:saltamontes/features/excursion/excursion_view.dart';
 
 import 'route_widgets_export.dart';
 
@@ -46,7 +47,12 @@ class AppRouter {
               GoRoute(
                 path: "/tracking_map",
                 builder: (context, state) => const TrackingMapView(),
-                // LocationDebugScreen(database: TrackingDatabase()),
+                routes: [
+                  GoRoute(
+                    path: '/excursion',
+                    builder: (context, state) => const ExcursionView(),
+                  ),
+                ],
               ),
             ],
           ),

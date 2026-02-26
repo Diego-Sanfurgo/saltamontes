@@ -68,6 +68,7 @@ class TraceService {
       lon: p.longitude,
       altitude: p.altitude,
       speed: p.speed,
+      bearing: p.bearing,
       accuracy: p.accuracy,
       timestamp: p.timestamp,
     );

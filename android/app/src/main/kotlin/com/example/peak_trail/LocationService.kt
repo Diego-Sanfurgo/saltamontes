@@ -43,6 +43,7 @@ class LocationService : Service() {
                             longitude = location.longitude,
                             altitude = location.altitude,
                             speed = if (location.hasSpeed()) location.speed.toDouble() else null,
+                            bearing = if (location.hasBearing()) location.bearing.toDouble() else null,
                             accuracy = if (location.hasAccuracy()) location.accuracy.toDouble() else null,
                             timestamp = location.time
                         )

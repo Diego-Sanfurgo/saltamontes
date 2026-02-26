@@ -48,6 +48,7 @@ class NativeLocationManager: NSObject, CLLocationManagerDelegate {
             lng: location.coordinate.longitude,
             alt: location.altitude,
             speed: location.speed >= 0 ? location.speed : nil,
+            bearing: location.course >= 0 ? location.course : nil,
             acc: location.horizontalAccuracy,
             timestamp: timestamp
         )

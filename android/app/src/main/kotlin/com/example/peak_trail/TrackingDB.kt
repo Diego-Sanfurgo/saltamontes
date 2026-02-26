@@ -4,10 +4,17 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import java.io.File
 
-@Database(entities = [TrackingPointEntity::class], version = 1, exportSchema = false)
+val MIGRATION_1_2 = object : Migration(1, 2) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE tracking_points ADD COLUMN bearing REAL")
+    }
+}
+
+@Database(entities = [TrackingPointEntity::class], version = 2, exportSchema = false)
 abstract class TrackingDatabase : RoomDatabase() {
     abstract fun trackingDao(): TrackingDao
 
@@ -17,12 +24,6 @@ abstract class TrackingDatabase : RoomDatabase() {
 
         fun getDatabase(context: Context): TrackingDatabase {
             return INSTANCE ?: synchronized(this) {
-                // RUTA CRÍTICA: Debe coincidir con Flutter
-                // Flutter 'getApplicationDocumentsDirectory' -> context.filesDir.parent + "/app_flutter"
-                // Ojo: Verifica la ruta exacta imprimiéndola en Flutter primero. 
-                // A menudo es más seguro pasar la ruta desde Flutter al iniciar el servicio nativo.
-                
-                // Opción A: Asumiendo que Flutter usa getApplicationDocumentsDirectory
                 val flutterDir = File(context.filesDir.parent, "app_flutter")
                 if (!flutterDir.exists()) flutterDir.mkdirs()
                 val dbFile = File(flutterDir, "tracking.db")
@@ -32,11 +33,11 @@ abstract class TrackingDatabase : RoomDatabase() {
                     TrackingDatabase::class.java,
                     dbFile.absolutePath
                 )
+                .addMigrations(MIGRATION_1_2)
                 .enableMultiInstanceInvalidation()
                 .addCallback(object : RoomDatabase.Callback() {
                     override fun onOpen(db: SupportSQLiteDatabase) {
                         super.onOpen(db)
-                        // IMPORTANTE: Habilitar WAL en el lado nativo también
                         db.query("PRAGMA journal_mode=WAL;").close()
                     }
                 })

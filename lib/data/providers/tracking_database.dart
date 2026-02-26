@@ -4,25 +4,35 @@ import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
-part '../models/tracking_database.g.dart';
+part 'tracking_database.g.dart';
 
-// Definición de la tabla
+// ─── Tabla de puntos de GPS en alta frecuencia ───
 class TrackingPoints extends Table {
-  // Drift generará "id" automáticamente como PK autoincrementable
   IntColumn get id => integer().autoIncrement()();
 
-  // Nombres explícitos para coincidir con el nativo
   RealColumn get latitude => real().named('latitude')();
   RealColumn get longitude => real().named('longitude')();
   RealColumn get altitude => real().nullable().named('altitude')();
   RealColumn get speed => real().nullable().named('speed')();
+  RealColumn get bearing => real().nullable().named('bearing')();
   RealColumn get accuracy => real().nullable().named('accuracy')();
 
-  // Guardamos timestamp como entero (milisegundos) para facilitar interoperabilidad
   IntColumn get timestamp => integer().named('timestamp')();
 }
 
-@DriftDatabase(tables: [TrackingPoints])
+// ─── Tabla cola de sincronización (Módulo 5) ───
+class SyncQueue extends Table {
+  TextColumn get id => text()();
+  TextColumn get excursionPayload => text().named('excursion_payload')();
+  TextColumn get status =>
+      text().named('status').withDefault(const Constant('pending'))();
+  IntColumn get createdAt => integer().named('created_at')();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+@DriftDatabase(tables: [TrackingPoints, SyncQueue])
 class TrackingDatabase extends _$TrackingDatabase {
   static final TrackingDatabase _instance = TrackingDatabase._();
   factory TrackingDatabase() => _instance;
@@ -30,7 +40,23 @@ class TrackingDatabase extends _$TrackingDatabase {
   TrackingDatabase._() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (Migrator m) async {
+      await m.createAll();
+    },
+    onUpgrade: (Migrator m, int from, int to) async {
+      if (from < 2) {
+        // v1 → v2: agregar bearing + sync_queue
+        await customStatement(
+          'ALTER TABLE tracking_points ADD COLUMN bearing REAL',
+        );
+        await m.createTable(syncQueue);
+      }
+    },
+  );
 
   // Stream para ver el track en vivo en el mapa
   Stream<List<TrackingPoint>> watchAllPoints() {
@@ -41,20 +67,39 @@ class TrackingDatabase extends _$TrackingDatabase {
 
   // Obtener todo el historial
   Future<List<TrackingPoint>> getAllPoints() => select(trackingPoints).get();
+
+  // Borrar todos los puntos de tracking (post-compilación)
+  Future<int> clearAllPoints() => delete(trackingPoints).go();
+
+  // ─── SyncQueue ops ───
+  Future<void> insertSyncItem(SyncQueueCompanion item) =>
+      into(syncQueue).insert(item);
+
+  Future<List<SyncQueueData>> getPendingSyncItems() =>
+      (select(syncQueue)..where((t) => t.status.equals('pending'))).get();
+
+  Stream<List<SyncQueueData>> watchPendingSyncItems() =>
+      (select(syncQueue)..where((t) => t.status.equals('pending'))).watch();
+
+  Future<void> markSynced(String id) =>
+      (update(syncQueue)..where((t) => t.id.equals(id))).write(
+        const SyncQueueCompanion(status: Value('synced')),
+      );
+
+  Future<int> deleteSyncItem(String id) =>
+      (delete(syncQueue)..where((t) => t.id.equals(id))).go();
+
+  Future<int> deleteAllSyncedItems() =>
+      (delete(syncQueue)..where((t) => t.status.equals('synced'))).go();
 }
 
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
-    // IMPORTANTE: Esta carpeta debe ser accesible por el código nativo también.
-    // En Android, getApplicationDocumentsDirectory suele ser 'app_flutter'.
-    // A veces es mejor usar getDatabasesPath() de sqflite si quieres la carpeta standard de DBs.
-    // Por ahora usaremos Documents que es seguro.
     final dbFolder = await getApplicationDocumentsDirectory();
     final file = File(p.join(dbFolder.path, 'tracking.db'));
 
     return NativeDatabase(
       file,
-      // Habilitar WAL es OBLIGATORIO para lectura/escritura simultánea
       setup: (database) {
         database.execute('PRAGMA journal_mode=WAL;');
       },

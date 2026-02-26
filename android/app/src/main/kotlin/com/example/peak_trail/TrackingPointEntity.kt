@@ -11,6 +11,7 @@ data class TrackingPointEntity(
     @ColumnInfo(name = "longitude") val longitude: Double,
     @ColumnInfo(name = "altitude") val altitude: Double?,
     @ColumnInfo(name = "speed") val speed: Double?,
+    @ColumnInfo(name = "bearing") val bearing: Double?,
     @ColumnInfo(name = "accuracy") val accuracy: Double?,
     @ColumnInfo(name = "timestamp") val timestamp: Long // Unix ms
 )

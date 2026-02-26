@@ -9,6 +9,7 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:saltamontes/core/services/layer_service.dart';
 import 'package:saltamontes/core/services/location_service.dart';
 import 'package:saltamontes/core/services/trace_service.dart';
+import 'package:saltamontes/core/services/sync_service.dart';
 import 'package:saltamontes/core/utils/constant_and_variables.dart';
 import 'package:saltamontes/data/repositories/tracking_map_repository.dart';
 
@@ -123,6 +124,10 @@ class TrackingMapBloc extends Bloc<TrackingMapEvent, TrackingMapState> {
       emit(state.copyWith(status: TrackingState.STOP_LOADING));
       await _traceService.stopTracking();
       await updateMapTrack(await _traceService.getAllTraces(), _controller);
+
+      // Compile-and-queue para sync offline-first (Module 5)
+      await SyncService.instance.enqueueExcursion();
+
       emit(state.copyWith(status: TrackingState.STOPPED));
       await Future.delayed(const Duration(seconds: 1));
       emit(state.copyWith(status: TrackingState.IDLE));

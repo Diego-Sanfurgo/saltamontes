@@ -42,3 +42,15 @@ class MapSelectPlace extends MapEvent {
   @override
   List<Object?> get props => [place, feature];
 }
+
+class MapShowTrackOverlay extends MapEvent {
+  final Map<String, dynamic> geojson;
+  MapShowTrackOverlay(this.geojson);
+  @override
+  List<Object?> get props => [geojson];
+}
+
+class MapClearTrackOverlay extends MapEvent {
+  @override
+  List<Object?> get props => [];
+}

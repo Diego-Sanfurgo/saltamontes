@@ -580,6 +580,43 @@ class LayerService {
       log('Error updating source tiles: $e');
     }
   }
+
+  // ─── Track Overlay (nearby tracks from place details) ───
+
+  /// Adds a GeoJSON track overlay to the map (e.g. from get_place_details_and_tracks).
+  static Future<void> addTrackOverlay(
+    MapboxMap controller,
+    String geojsonStr,
+  ) async {
+    // Limpiar overlay anterior si existe
+    await removeTrackOverlay(controller);
+
+    await controller.style.addSource(
+      GeoJsonSource(id: MapConstants.trackOverlaySourceID, data: geojsonStr),
+    );
+
+    await controller.style.addLayer(
+      LineLayer(
+        id: MapConstants.trackOverlayLayerID,
+        sourceId: MapConstants.trackOverlaySourceID,
+        lineColor: 0xFF2196F3, // Blue
+        lineWidth: 4.0,
+        lineOpacity: 0.8,
+        lineCap: LineCap.ROUND,
+        lineJoin: LineJoin.ROUND,
+      ),
+    );
+  }
+
+  /// Removes the track overlay from the map.
+  static Future<void> removeTrackOverlay(MapboxMap controller) async {
+    try {
+      await controller.style.removeStyleLayer(MapConstants.trackOverlayLayerID);
+      await controller.style.removeStyleSource(
+        MapConstants.trackOverlaySourceID,
+      );
+    } catch (_) {}
+  }
 }
 
 String _getAssetPath(String sourceBaseID) {

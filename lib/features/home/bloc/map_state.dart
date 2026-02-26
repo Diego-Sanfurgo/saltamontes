@@ -7,12 +7,14 @@ class MapState extends Equatable {
   final List<Place> places;
   final Place? selectedPlace;
   final bool isLoadingPlace;
+  final Map<String, dynamic>? trackOverlayGeoJson;
 
   const MapState({
     this.status = MapStatus.initial,
     this.places = const [],
     this.selectedPlace,
     this.isLoadingPlace = false,
+    this.trackOverlayGeoJson,
   });
 
   MapState copyWith({
@@ -20,6 +22,7 @@ class MapState extends Equatable {
     List<Place>? places,
     Place? Function()? selectedPlace,
     bool? isLoadingPlace,
+    Map<String, dynamic>? Function()? trackOverlayGeoJson,
   }) {
     return MapState(
       status: status ?? this.status,
@@ -28,9 +31,18 @@ class MapState extends Equatable {
           ? selectedPlace()
           : this.selectedPlace,
       isLoadingPlace: isLoadingPlace ?? this.isLoadingPlace,
+      trackOverlayGeoJson: trackOverlayGeoJson != null
+          ? trackOverlayGeoJson()
+          : this.trackOverlayGeoJson,
     );
   }
 
   @override
-  List<Object?> get props => [status, places, selectedPlace, isLoadingPlace];
+  List<Object?> get props => [
+    status,
+    places,
+    selectedPlace,
+    isLoadingPlace,
+    trackOverlayGeoJson,
+  ];
 }

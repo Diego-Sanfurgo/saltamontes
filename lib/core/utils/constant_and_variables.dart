@@ -58,6 +58,10 @@ class MapConstants {
   static const String trackingLayerID = "$trackingID-line";
   static const String trackingFeatureID = "$trackingID-feature";
 
+  // Track Overlay (nearby tracks from place details)
+  static const String trackOverlaySourceID = 'track-overlay-source';
+  static const String trackOverlayLayerID = 'track-overlay-layer';
+
   static const _supabaseFunctions = "${Environment.supabaseURL}/functions/v1/";
 
   static const String mountainAreasMVT =
