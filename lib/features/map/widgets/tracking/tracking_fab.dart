@@ -49,10 +49,9 @@ void _showCreateOptions(BuildContext context) {
             ),
             ListTile(
               leading: CircleAvatar(
-                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                child: const Icon(Icons.flash_on),
+                child: const Icon(BootstrapIcons.record_circle),
               ),
-              title: const Text('Excursión Rápida'),
+              title: const Text('Grabar actividad'),
               subtitle: const Text('Comienza a grabar inmediatamente'),
               onTap: () {
                 NavigationService.pop();
@@ -61,12 +60,9 @@ void _showCreateOptions(BuildContext context) {
             ),
             ListTile(
               leading: CircleAvatar(
-                backgroundColor: Theme.of(
-                  context,
-                ).colorScheme.secondaryContainer,
-                child: const Icon(Icons.event),
+                child: const Icon(BootstrapIcons.calendar3_event),
               ),
-              title: const Text('Excursión Programada'),
+              title: const Text('Crear excursión'),
               subtitle: const Text(
                 'Definir fecha, ruta e invitar participantes',
               ),

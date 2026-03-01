@@ -206,7 +206,7 @@ class _BodyState extends State<_Body> {
                             ),
 
                           Positioned(
-                            top: 16,
+                            top: 8,
                             left: 0,
                             right: 0,
                             child: Column(
