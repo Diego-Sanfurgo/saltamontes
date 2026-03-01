@@ -3,11 +3,11 @@ import 'dart:developer';
 import 'package:saltamontes/data/models/place.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class PlaceProvider {
-  factory PlaceProvider() => _instance;
-  static final PlaceProvider _instance = PlaceProvider._internal();
+class PlaceApiProvider {
+  factory PlaceApiProvider() => _instance;
+  static final PlaceApiProvider _instance = PlaceApiProvider._internal();
   final SupabaseClient supabase = Supabase.instance.client;
-  PlaceProvider._internal();
+  PlaceApiProvider._internal();
 
   Future<Set<Place>> fetchAll() async {
     try {

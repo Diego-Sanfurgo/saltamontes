@@ -5,8 +5,8 @@ class SettingsRepository {
 
   SettingsRepository(this._settingsProvider);
 
-  bool isDarkMode() {
-    return _settingsProvider.getThemeMode() ?? false;
+  Future<bool> isDarkMode() async {
+    return await _settingsProvider.getThemeMode() ?? false;
   }
 
   Future<void> setDarkMode(bool isDarkMode) async {

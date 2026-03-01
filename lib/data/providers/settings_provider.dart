@@ -1,17 +1,19 @@
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:saltamontes/data/providers/base_provider.dart';
 
-class SettingsProvider {
-  final SharedPreferences _prefs;
+class SettingsProvider extends BaseProvider {
+  static final SettingsProvider _instance = SettingsProvider._internal();
 
-  SettingsProvider(this._prefs);
+  factory SettingsProvider() => _instance;
 
-  static const String _themeKey = 'is_dark_mode';
+  SettingsProvider._internal();
 
-  bool? getThemeMode() {
-    return _prefs.getBool(_themeKey);
+  Future<bool?> getThemeMode() async {
+    final storage = await prefs;
+    return storage.getBool(ProviderKey.SETTINGS.name);
   }
 
   Future<void> setThemeMode(bool isDarkMode) async {
-    await _prefs.setBool(_themeKey, isDarkMode);
+    final storage = await prefs;
+    await storage.setBool(ProviderKey.SETTINGS.name, isDarkMode);
   }
 }

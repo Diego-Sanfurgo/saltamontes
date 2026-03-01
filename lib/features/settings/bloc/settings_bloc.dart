@@ -16,8 +16,11 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     on<ToggleTheme>(_onToggleTheme);
   }
 
-  void _onLoadTheme(LoadTheme event, Emitter<SettingsState> emit) {
-    final isDarkMode = _settingsRepository.isDarkMode();
+  Future<void> _onLoadTheme(
+    LoadTheme event,
+    Emitter<SettingsState> emit,
+  ) async {
+    final isDarkMode = await _settingsRepository.isDarkMode();
     emit(state.copyWith(isDarkMode: isDarkMode));
   }
 

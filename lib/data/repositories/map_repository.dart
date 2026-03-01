@@ -6,7 +6,7 @@ import 'package:saltamontes/data/providers/place_provider.dart';
 class TrackingMapRepository {
   TrackingMapRepository(this._placeProvider);
 
-  final PlaceProvider _placeProvider;
+  final PlaceApiProvider _placeProvider;
 
   Future<Set<Place>> getPeaks() async {
     try {

@@ -9,8 +9,7 @@ void main() {
   testWidgets('App smoke test', (WidgetTester tester) async {
     // Mock SharedPreferences
     SharedPreferences.setMockInitialValues({'is_dark_mode': false});
-    final prefs = await SharedPreferences.getInstance();
-    final settingsRepository = SettingsRepository(SettingsProvider(prefs));
+    final settingsRepository = SettingsRepository(SettingsProvider());
 
     // Build our app and trigger a frame.
     await tester.pumpWidget(App(settingsRepository: settingsRepository));

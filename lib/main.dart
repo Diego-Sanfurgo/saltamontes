@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:saltamontes/core/theme/theme.dart';
 import 'package:saltamontes/core/router/app_router.dart';
@@ -16,8 +15,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await initApp();
-  final prefs = await SharedPreferences.getInstance();
-  final settingsRepository = SettingsRepository(SettingsProvider(prefs));
+  final settingsRepository = SettingsRepository(SettingsProvider());
 
   runApp(App(settingsRepository: settingsRepository));
 }

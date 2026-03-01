@@ -6,7 +6,7 @@ import 'package:saltamontes/data/providers/place_provider.dart';
 class PlaceRepository {
   PlaceRepository(this._provider);
 
-  final PlaceProvider _provider;
+  final PlaceApiProvider _provider;
 
   Future<Set<Place>> getAll() async {
     try {
