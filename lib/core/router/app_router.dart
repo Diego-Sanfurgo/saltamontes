@@ -1,8 +1,6 @@
 import 'package:go_router/go_router.dart';
 
 import 'package:saltamontes/core/utils/constant_and_variables.dart';
-import 'package:saltamontes/features/tracking_map/tracking_map.dart';
-import 'package:saltamontes/features/excursion/excursion_view.dart';
 
 import 'route_widgets_export.dart';
 
@@ -40,24 +38,7 @@ class AppRouter {
               ),
             ],
           ),
-
-          // RAMA 2: mapa de seguimiento
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: "/tracking_map",
-                builder: (context, state) => const TrackingMapView(),
-                routes: [
-                  GoRoute(
-                    path: '/excursion',
-                    builder: (context, state) => const ExcursionView(),
-                  ),
-                ],
-              ),
-            ],
-          ),
-
-          //RAMA 3: Perfil
+          //RAMA 2: Perfil
           StatefulShellBranch(
             routes: [
               GoRoute(

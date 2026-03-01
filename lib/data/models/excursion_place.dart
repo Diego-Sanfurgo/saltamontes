@@ -1,3 +1,4 @@
+//TODO: Este objeto deberia venir incustado dentro de Excursion
 class ExcursionPlace {
   final String excursionId;
   final String placeId;

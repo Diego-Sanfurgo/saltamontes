@@ -10,6 +10,8 @@ import 'package:saltamontes/core/utils/track_compiler.dart';
 import 'package:saltamontes/data/models/trace_point.dart';
 import 'package:saltamontes/data/providers/tracking_database.dart';
 
+//TODO: REVISAR
+
 /// Servicio de sincronización Offline-First.
 ///
 /// 1. Al "Finalizar Excursión": compila puntos GPS → sync_queue → limpia points.
