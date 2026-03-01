@@ -8,6 +8,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:equatable/equatable.dart';
 import 'package:saltamontes/core/services/layer_service.dart';
 import 'package:saltamontes/data/models/place.dart';
+import 'package:saltamontes/data/providers/map_controller_provider.dart';
 import 'package:saltamontes/data/repositories/place_repository.dart';
 import 'package:saltamontes/features/home/dto/selected_feature_dto.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -22,18 +23,20 @@ part 'map_event.dart';
 part 'map_state.dart';
 
 class MapBloc extends Bloc<MapEvent, MapState> {
-  MapBloc(this._placeRepository)
+  MapBloc(this._placeRepository, this._mapControllerProvider)
     : super(const MapState(status: MapStatus.loading)) {
-    on<MapCreated>(_onCreated);
     on<MapStarted>(_onStarted);
     on<MapMoveCamera>(_onMoveCamera);
     on<MapSelectPlace>(_onSelectPlace);
     on<MapDeselectFeature>(_onDeselectFeature);
     on<MapShowTrackOverlay>(_onShowTrackOverlay);
     on<MapClearTrackOverlay>(_onClearTrackOverlay);
+    on<_MapControllerReady>(_onControllerReady);
+    _mapControllerProvider.addListener(_onControllerChanged);
   }
 
   final PlaceRepository _placeRepository;
+  final MapControllerProvider _mapControllerProvider;
 
   MapboxMap? _controller;
   final LocationService _locationService = LocationService.instance;
@@ -50,24 +53,32 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     emit(state.copyWith(status: MapStatus.initial));
   }
 
-  Future<void> _onCreated(MapCreated event, Emitter<MapState> emit) async {
-    _controller = event.controller;
+  void _onControllerChanged() {
+    final controller = _mapControllerProvider.controller;
+    if (controller != null && controller != _controller) {
+      _controller = controller;
+      add(_MapControllerReady(controller));
+    }
+  }
 
-    _controller!.location.updateSettings(
+  Future<void> _onControllerReady(
+    _MapControllerReady event,
+    Emitter<MapState> emit,
+  ) async {
+    final controller = event.controller;
+
+    controller.location.updateSettings(
       LocationComponentSettings(
         enabled: true,
         puckBearingEnabled: true,
         puckBearing: PuckBearing.HEADING,
         pulsingEnabled: true,
-        // locationPuck: LocationPuck(locationPuck2D: LocationPuck2D()),
       ),
     );
 
-    await LayerService.addPlacesSource(_controller!);
+    await LayerService.addPlacesSource(controller);
 
-    final tapStream = addOnMapTapListener(_controller!, [
-      MapConstants.placesID,
-    ]);
+    final tapStream = addOnMapTapListener(controller, [MapConstants.placesID]);
 
     tapStream.listen((selectedFeature) {
       add(MapSelectPlace(feature: selectedFeature));
@@ -265,5 +276,11 @@ class MapBloc extends Bloc<MapEvent, MapState> {
 
     await LayerService.removeTrackOverlay(_controller!);
     emit(state.copyWith(trackOverlayGeoJson: () => null));
+  }
+
+  @override
+  Future<void> close() {
+    _mapControllerProvider.removeListener(_onControllerChanged);
+    return super.close();
   }
 }

@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart' as geo;
 import 'package:saltamontes/core/services/location_service.dart';
+import 'package:saltamontes/data/providers/map_controller_provider.dart';
 
 part 'location_state.dart';
 
@@ -12,8 +13,14 @@ part 'location_state.dart';
 /// Utiliza la API de Viewport de Mapbox para delegar el control de la cámara
 /// al SDK nativo, evitando conflictos de animación y lecturas manuales de sensores.
 class LocationCubit extends Cubit<LocationState> {
-  LocationCubit() : super(const LocationState());
+  LocationCubit(this._mapControllerProvider) : super(const LocationState()) {
+    _mapControllerProvider.addListener(_onControllerChanged);
+    _mapControllerProvider.onUserInteraction = onUserInteracted;
+    _controller = _mapControllerProvider.controller;
+    if (_controller != null) _initLocationSubscription();
+  }
 
+  final MapControllerProvider _mapControllerProvider;
   MapboxMap? _controller;
   final LocationService _locationService = LocationService.instance;
   StreamSubscription<geo.Position>? _locationSubscription;
@@ -24,9 +31,9 @@ class LocationCubit extends Cubit<LocationState> {
   /// Umbral de velocidad alta (km/h) — encima usa trayectoria GPS (COURSE).
   static const double _speedThresholdHigh = 5.0;
 
-  void setController(MapboxMap controller) {
-    _controller = controller;
-    _initLocationSubscription();
+  void _onControllerChanged() {
+    _controller = _mapControllerProvider.controller;
+    if (_controller != null) _initLocationSubscription();
   }
 
   void _initLocationSubscription() {
@@ -37,25 +44,35 @@ class LocationCubit extends Cubit<LocationState> {
   }
 
   /// Activa el seguimiento con brújula (heading) vía Viewport API.
-  void enableTrackingAndHeading() {
+  void enableTrackingAndHeading() async {
     if (_controller == null) return;
 
     _updatePuckBearing(PuckBearing.HEADING);
 
+    // Leer zoom actual para mantenerlo en modo compass
+    double? currentZoom;
+    try {
+      final camera = await _controller!.getCameraState();
+      currentZoom = camera.zoom;
+    } catch (_) {}
+
     emit(state.copyWith(cameraMode: CameraMode.compass));
+    _pushViewport(currentZoom: currentZoom);
   }
 
-  /// Fuerza re-centrado emitiendo free->following para que el
-  /// BlocListener detecte el cambio y aplique animación.
+  /// Fuerza re-centrado emitiendo free->following.
   void _recenterFollowing() {
     emit(state.copyWith(cameraMode: CameraMode.free));
+    _pushViewport();
     emit(state.copyWith(cameraMode: CameraMode.following));
+    _pushViewport();
   }
 
   /// Interrupción por gesto del usuario — vuelve a modo libre.
   void onUserInteracted() {
     if (state.cameraMode != CameraMode.free) {
       emit(state.copyWith(cameraMode: CameraMode.free));
+      _pushViewport();
     }
   }
 
@@ -69,6 +86,7 @@ class LocationCubit extends Cubit<LocationState> {
     switch (currentMode) {
       case CameraMode.free:
         emit(state.copyWith(cameraMode: CameraMode.following));
+        _pushViewport();
         break;
       case CameraMode.following:
         // Re-centrar a zoom 14 y luego pasar a compass
@@ -77,9 +95,20 @@ class LocationCubit extends Cubit<LocationState> {
         break;
       case CameraMode.compass:
         emit(state.copyWith(cameraMode: CameraMode.following));
-
+        _pushViewport();
         break;
     }
+  }
+
+  /// Notifica al widget del mapa que debe animar un cambio de viewport.
+  void _pushViewport({double? currentZoom}) {
+    final vp = state.toViewportState(currentZoom: currentZoom);
+    _mapControllerProvider.requestViewport(
+      vp,
+      transition: DefaultViewportTransition(
+        maxDuration: Duration(milliseconds: 500),
+      ),
+    );
   }
 
   /// Smart Toggle: evalúa velocidad para decidir PuckBearing.
@@ -114,6 +143,10 @@ class LocationCubit extends Cubit<LocationState> {
 
   @override
   Future<void> close() {
+    _mapControllerProvider.removeListener(_onControllerChanged);
+    if (_mapControllerProvider.onUserInteraction == onUserInteracted) {
+      _mapControllerProvider.onUserInteraction = null;
+    }
     _locationSubscription?.cancel();
     return super.close();
   }

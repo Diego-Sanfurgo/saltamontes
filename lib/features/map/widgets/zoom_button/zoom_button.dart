@@ -1,11 +1,27 @@
-import 'package:bootstrap_icons/bootstrap_icons.dart';
 import 'package:flutter/material.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:bootstrap_icons/bootstrap_icons.dart';
+
+import 'package:saltamontes/data/providers/map_controller_provider.dart';
 
 import 'cubit/zoom_button_cubit.dart';
 
 class ZoomButton extends StatelessWidget {
   const ZoomButton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final mapControllerProvider = context.read<MapControllerProvider>();
+    return BlocProvider(
+      create: (context) => ZoomButtonCubit(mapControllerProvider),
+      child: const _ZoomButtonWidget(),
+    );
+  }
+}
+
+class _ZoomButtonWidget extends StatelessWidget {
+  const _ZoomButtonWidget();
 
   @override
   Widget build(BuildContext context) {

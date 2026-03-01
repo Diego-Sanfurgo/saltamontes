@@ -3,8 +3,10 @@ part of 'map_bloc.dart';
 @immutable
 sealed class MapEvent extends Equatable {}
 
-class MapCreated extends MapEvent {
-  MapCreated(this.controller);
+/// Evento interno disparado cuando el [MapControllerProvider] notifica
+/// un nuevo controller.
+class _MapControllerReady extends MapEvent {
+  _MapControllerReady(this.controller);
 
   final MapboxMap controller;
 

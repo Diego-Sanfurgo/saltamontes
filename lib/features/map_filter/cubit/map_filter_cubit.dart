@@ -2,16 +2,21 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:saltamontes/core/services/layer_service.dart';
+import 'package:saltamontes/data/providers/map_controller_provider.dart';
 
 part 'map_filter_state.dart';
 
 class MapFilterCubit extends Cubit<MapFilterState> {
+  MapFilterCubit(this._mapControllerProvider) : super(const MapFilterState()) {
+    _mapControllerProvider.addListener(_onControllerChanged);
+    _controller = _mapControllerProvider.controller;
+  }
+
+  final MapControllerProvider _mapControllerProvider;
   MapboxMap? _controller;
 
-  MapFilterCubit() : super(const MapFilterState());
-
-  void setController(MapboxMap controller) {
-    _controller = controller;
+  void _onControllerChanged() {
+    _controller = _mapControllerProvider.controller;
   }
 
   void togglePlaceType(String placeType) {
@@ -52,5 +57,11 @@ class MapFilterCubit extends Cubit<MapFilterState> {
         altitudeMax: () => null,
       ),
     );
+  }
+
+  @override
+  Future<void> close() {
+    _mapControllerProvider.removeListener(_onControllerChanged);
+    return super.close();
   }
 }

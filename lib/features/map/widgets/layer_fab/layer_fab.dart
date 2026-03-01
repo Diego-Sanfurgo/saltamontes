@@ -4,10 +4,53 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bootstrap_icons/bootstrap_icons.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
+import 'package:saltamontes/core/theme/colors.dart';
 import 'package:saltamontes/core/services/navigation_service.dart';
 import 'package:saltamontes/core/utils/constant_and_variables.dart';
+
+import 'package:saltamontes/data/providers/map_controller_provider.dart';
+
 import 'package:saltamontes/features/map_filter/cubit/map_filter_cubit.dart';
-import 'package:saltamontes/features/map/widgets/map_style_selector/cubit/map_style_cubit.dart';
+import 'package:saltamontes/features/map/widgets/layer_fab/cubit/map_style_cubit.dart';
+
+class LayerFAB extends StatelessWidget {
+  const LayerFAB({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final mapControllerProvider = context.read<MapControllerProvider>();
+
+    return BlocProvider(
+      create: (context) => MapStyleCubit(mapControllerProvider),
+      child: const _LayerFABWidget(),
+    );
+  }
+}
+
+class _LayerFABWidget extends StatelessWidget {
+  const _LayerFABWidget();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<MapStyleCubit, MapStyleState>(
+      builder: (context, state) {
+        return FloatingActionButton.small(
+          heroTag: Key("layer_FAB"),
+          backgroundColor: state.isDefault
+              ? Theme.of(context).colorScheme.surface
+              : AppColors.accentColor,
+          child: Icon(
+            BootstrapIcons.layers,
+            color: state.isDefault
+                ? Theme.of(context).colorScheme.onSurface
+                : Colors.white,
+          ),
+          onPressed: () => showMapStyleSelector(context),
+        );
+      },
+    );
+  }
+}
 
 // ── Data models ──
 

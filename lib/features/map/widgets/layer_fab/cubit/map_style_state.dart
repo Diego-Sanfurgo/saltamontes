@@ -16,6 +16,9 @@ class MapStyleState extends Equatable {
     );
   }
 
+  bool get isDefault =>
+      styleUri == MapboxStyles.OUTDOORS && activeOverlays.isEmpty;
+
   @override
   List<Object?> get props => [styleUri, activeOverlays];
 }

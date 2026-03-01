@@ -2,16 +2,21 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:saltamontes/core/services/layer_service.dart';
+import 'package:saltamontes/data/providers/map_controller_provider.dart';
 
 part 'map_style_state.dart';
 
 class MapStyleCubit extends Cubit<MapStyleState> {
-  MapStyleCubit() : super(const MapStyleState());
+  MapStyleCubit(this._mapControllerProvider) : super(const MapStyleState()) {
+    _mapControllerProvider.addListener(_onControllerChanged);
+    _controller = _mapControllerProvider.controller;
+  }
 
-  late MapboxMap? _controller;
+  final MapControllerProvider _mapControllerProvider;
+  MapboxMap? _controller;
 
-  void setController(MapboxMap controller) {
-    _controller = controller;
+  void _onControllerChanged() {
+    _controller = _mapControllerProvider.controller;
   }
 
   Future<void> onChangeStyle(
@@ -58,5 +63,11 @@ class MapStyleCubit extends Cubit<MapStyleState> {
     }
 
     emit(state.copyWith(activeOverlays: overlays));
+  }
+
+  @override
+  Future<void> close() {
+    _mapControllerProvider.removeListener(_onControllerChanged);
+    return super.close();
   }
 }
