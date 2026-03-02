@@ -12,6 +12,7 @@ import 'package:saltamontes/data/repositories/place_repository.dart';
 import 'package:saltamontes/features/map_filter/cubit/map_filter_cubit.dart';
 
 import 'bloc/map_bloc.dart';
+import 'cubit/home_shell_cubit.dart';
 
 class HomeShellView extends StatelessWidget {
   const HomeShellView({super.key, required this.navigationShell});
@@ -35,33 +36,48 @@ class HomeShellView extends StatelessWidget {
               )..add(MapStarted()),
               child: BlocProvider(
                 create: (context) => MapFilterCubit(mapControllerProvider),
-                child: Scaffold(
-                  body: navigationShell,
-                  bottomNavigationBar: BottomNavigationBar(
-                    currentIndex: navigationShell.currentIndex,
-                    items: const [
-                      BottomNavigationBarItem(
-                        icon: Icon(BootstrapIcons.map),
-                        label: "Mapa",
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(BootstrapIcons.person),
-                        label: "Perfil",
-                      ),
-                    ],
-                    onTap: (index) {
-                      navigationShell.goBranch(
-                        index,
-                        initialLocation: index == navigationShell.currentIndex,
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
+                child: BlocProvider(
+                  create: (context) => HomeShellCubit(),
+                  child: Scaffold(
+                    extendBody: true,
+                    body: navigationShell,
+                    bottomNavigationBar: BlocBuilder<HomeShellCubit, bool>(
+                      builder: (context, isNavBarVisible) {
+                        return AnimatedSlide(
+                          offset: isNavBarVisible
+                              ? Offset.zero
+                              : const Offset(0, 1.2),
+                          duration: const Duration(milliseconds: 300),
+                          child: NavigationBar(
+                            selectedIndex: navigationShell.currentIndex,
+                            destinations: const [
+                              NavigationDestination(
+                                icon: Icon(BootstrapIcons.map),
+                                label: "Mapa",
+                              ),
+                              NavigationDestination(
+                                icon: Icon(BootstrapIcons.person),
+                                label: "Perfil",
+                              ),
+                            ],
+                            onDestinationSelected: (index) {
+                              navigationShell.goBranch(
+                                index,
+                                initialLocation:
+                                    index == navigationShell.currentIndex,
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ), // BlocBuilder
+                  ), // Scaffold
+                ), // HomeShellCubit
+              ), // MapFilterCubit
+            ), // MapBloc
+          ); // RepositoryProvider
+        }, // builder function
+      ), // Builder
+    ); // ChangeNotifierProvider
   }
 }
