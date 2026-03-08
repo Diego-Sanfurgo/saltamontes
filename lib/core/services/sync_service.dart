@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:drift/drift.dart';
@@ -22,7 +23,7 @@ class SyncService {
   SyncService._();
 
   final TrackingDatabase _db = TrackingDatabase();
-  final SupabaseClient _client = Supabase.instance.client;
+  final SupabaseClient _supabase = Supabase.instance.client;
   final Connectivity _connectivity = Connectivity();
   final Uuid _uuid = const Uuid();
 
@@ -75,7 +76,7 @@ class SyncService {
         )
         .toList();
 
-    final userId = _client.auth.currentUser?.id;
+    final userId = _supabase.auth.currentUser?.id;
     final payload = TrackCompiler.buildSyncPayload(
       points: tracePoints,
       excursionId: excursionId,
@@ -115,7 +116,7 @@ class SyncService {
           await _db.deleteSyncItem(item.id);
         } catch (e) {
           // Si falla un item, continuar con los demás
-          print('SyncService: Error subiendo ${item.id}: $e');
+          log('SyncService: Error subiendo ${item.id}: $e');
         }
       }
     } finally {
@@ -134,7 +135,7 @@ class SyncService {
       await _db.deleteSyncItem(item.id);
       return true;
     } catch (e) {
-      print('SyncService: Retry failed for $itemId: $e');
+      log('SyncService: Retry failed for $itemId: $e');
       return false;
     }
   }
@@ -146,7 +147,7 @@ class SyncService {
 
     // 1. Insertar track en geo_core.user_tracks
     //    (esto dispara el trigger de geofencing automáticamente)
-    final trackResponse = await _client
+    final trackResponse = await _supabase
         .schema('geo_core')
         .from('user_tracks')
         .insert(trackData)
@@ -157,7 +158,7 @@ class SyncService {
 
     // 2. Actualizar excursión con el recorded_track_id
     if (excursionId != null) {
-      await _client
+      await _supabase
           .from('excursions')
           .update({'recorded_track_id': trackId})
           .eq('id', excursionId);

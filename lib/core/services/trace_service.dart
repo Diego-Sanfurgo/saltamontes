@@ -1,5 +1,6 @@
 // trace_service.dart
 import 'dart:async';
+import 'dart:developer';
 import 'package:flutter/services.dart';
 import 'package:saltamontes/data/models/trace_point.dart';
 import 'package:saltamontes/data/providers/tracking_database.dart';
@@ -37,7 +38,7 @@ class TraceService {
     try {
       await _platform.invokeMethod('startTracking');
     } on PlatformException catch (e) {
-      print("Error starting tracking: ${e.message}");
+      log("Error starting tracking: ${e.message}");
       rethrow;
     }
   }
@@ -46,7 +47,7 @@ class TraceService {
     try {
       await _platform.invokeMethod('stopTracking');
     } on PlatformException catch (e) {
-      print("Error stopping tracking: ${e.message}");
+      log("Error stopping tracking: ${e.message}");
       rethrow;
     }
   }
@@ -59,7 +60,7 @@ class TraceService {
   Future<void> forceUpload() async {
     // Implement force upload logic if applicable or keep as placeholder
     // await _platform.invokeMethod('forceUpload');
-    print("Force upload not implemented yet in native layer");
+    log("Force upload not implemented yet in native layer");
   }
 
   TracePoint _mapToTracePoint(TrackingPoint p) {

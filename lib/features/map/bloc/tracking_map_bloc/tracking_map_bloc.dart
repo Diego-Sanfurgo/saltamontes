@@ -109,7 +109,7 @@ class TrackingMapBloc extends Bloc<TrackingMapEvent, TrackingMapState> {
   ) async {
     try {
       if (_controller == null) return;
-      // emit(state.copyWith(state: TrackingState.STOP_LOADING));
+      await _traceService.startTracking();
       await updateMapTrack(await _traceService.getAllTraces(), _controller);
       emit(state.copyWith(status: TrackingState.PAUSED));
     } on Exception {
