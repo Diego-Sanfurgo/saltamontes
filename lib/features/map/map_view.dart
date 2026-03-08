@@ -4,11 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
+import 'package:saltamontes/core/injection.dart';
 import 'package:saltamontes/core/services/navigation_service.dart';
 import 'package:saltamontes/data/providers/map_controller_provider.dart';
-import 'package:saltamontes/data/providers/place_provider.dart';
-import 'package:saltamontes/data/repositories/place_repository.dart';
 import 'package:saltamontes/data/repositories/excursion_repository.dart';
+import 'package:saltamontes/data/repositories/tracking_map_repository.dart';
+import 'package:saltamontes/data/repositories/sync_repository.dart';
 import 'package:saltamontes/features/excursion/bloc/excursion_bloc.dart';
 import 'package:saltamontes/features/map/widgets/mocked_search_bar.dart';
 import 'package:saltamontes/features/map/widgets/place_details_sheet.dart';
@@ -21,8 +22,6 @@ import '../../widgets/simple_scale_bar.dart';
 import 'widgets/tracking/tracking_bottom_sheet.dart';
 import 'widgets/tracking/tracking_fab.dart';
 import 'widgets/zoom_button/zoom_button.dart';
-import 'package:saltamontes/data/providers/tracking_provider.dart';
-import 'package:saltamontes/data/repositories/tracking_map_repository.dart';
 import 'package:saltamontes/features/map/bloc/tracking_map_bloc/tracking_map_bloc.dart';
 import 'widgets/tracking/animated_action_btn.dart';
 
@@ -42,33 +41,23 @@ class _MapViewState extends State<MapView> {
   @override
   Widget build(BuildContext context) {
     final mapControllerProvider = context.read<MapControllerProvider>();
-    return MultiRepositoryProvider(
+    return MultiBlocProvider(
       providers: [
-        RepositoryProvider(
-          create: (context) => PlaceRepository(PlaceApiProvider()),
+        BlocProvider(
+          create: (_) => ExcursionBloc(
+            repository: sl<ExcursionRepository>(),
+            syncRepository: sl<SyncRepository>(),
+          )..add(LoadExcursions()),
         ),
-        RepositoryProvider(create: (context) => ExcursionRepository()),
-        RepositoryProvider(
-          create: (context) =>
-              TrackingMapRepository(provider: TrackingProvider()),
+        BlocProvider(
+          create: (_) => TrackingMapBloc(
+            repository: sl<TrackingMapRepository>(),
+            mapControllerProvider: mapControllerProvider,
+            syncRepository: sl<SyncRepository>(),
+          )..add(const TrackingMapInitialize()),
         ),
       ],
-      child: MultiBlocProvider(
-        providers: [
-          BlocProvider(
-            create: (context) =>
-                ExcursionBloc(repository: context.read<ExcursionRepository>())
-                  ..add(LoadExcursions()),
-          ),
-          BlocProvider(
-            create: (context) => TrackingMapBloc(
-              repository: context.read<TrackingMapRepository>(),
-              mapControllerProvider: mapControllerProvider,
-            )..add(const TrackingMapInitialize()),
-          ),
-        ],
-        child: const _MapViewWidget(),
-      ),
+      child: const _MapViewWidget(),
     );
   }
 }

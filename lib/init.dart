@@ -3,6 +3,7 @@ import 'package:saltamontes/core/services/location_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/environment/env.dart';
+import 'core/injection.dart';
 
 Future<void> initApp() async {
   MapboxOptions.setAccessToken(Environment.mapboxToken);
@@ -15,4 +16,7 @@ Future<void> initApp() async {
 
     LocationService.instance.init(),
   ]);
+
+  // Registrar dependencias después de que Supabase esté inicializado
+  initDependencies();
 }

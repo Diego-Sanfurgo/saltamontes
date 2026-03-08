@@ -1,3 +1,6 @@
+import 'package:saltamontes/data/models/excursion_participant.dart';
+import 'package:saltamontes/data/models/excursion_place.dart';
+
 class Excursion {
   final String id;
   final String? ownerId;
@@ -10,6 +13,8 @@ class Excursion {
   final String? inviteToken;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final List<ExcursionParticipant> participants;
+  final List<ExcursionPlace> places;
 
   const Excursion({
     required this.id,
@@ -23,6 +28,8 @@ class Excursion {
     this.inviteToken,
     this.createdAt,
     this.updatedAt,
+    this.participants = const [],
+    this.places = const [],
   });
 
   Excursion copyWith({
@@ -37,6 +44,8 @@ class Excursion {
     String? inviteToken,
     DateTime? createdAt,
     DateTime? updatedAt,
+    List<ExcursionParticipant>? participants,
+    List<ExcursionPlace>? places,
   }) => Excursion(
     id: id ?? this.id,
     ownerId: ownerId ?? this.ownerId,
@@ -49,6 +58,8 @@ class Excursion {
     inviteToken: inviteToken ?? this.inviteToken,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
+    participants: participants ?? this.participants,
+    places: places ?? this.places,
   );
 
   factory Excursion.fromJson(Map<String, dynamic> json) => Excursion(
@@ -67,6 +78,18 @@ class Excursion {
     updatedAt: json['updated_at'] != null
         ? DateTime.parse(json['updated_at'] as String)
         : null,
+    participants:
+        (json['excursion_participants'] as List?)
+            ?.map(
+              (e) => ExcursionParticipant.fromJson(e as Map<String, dynamic>),
+            )
+            .toList() ??
+        const [],
+    places:
+        (json['excursion_places'] as List?)
+            ?.map((e) => ExcursionPlace.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        const [],
   );
 
   Map<String, dynamic> toJson() => {

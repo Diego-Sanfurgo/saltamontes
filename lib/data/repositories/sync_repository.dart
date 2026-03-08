@@ -4,36 +4,35 @@ import 'dart:developer';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:drift/drift.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:saltamontes/core/utils/track_compiler.dart';
 import 'package:saltamontes/data/models/trace_point.dart';
+import 'package:saltamontes/data/providers/sync_provider.dart';
 import 'package:saltamontes/data/providers/tracking_database.dart';
 
-//TODO: REVISAR
-
-/// Servicio de sincronización Offline-First.
+/// Repositorio de sincronización Offline-First.
 ///
-/// 1. Al "Finalizar Excursión": compila puntos GPS → sync_queue → limpia points.
-/// 2. Escucha conectividad para auto-subir.
-/// 3. Permite retry manual de items fallidos.
-class SyncService {
-  static final SyncService instance = SyncService._();
-  SyncService._();
-
-  final TrackingDatabase _db = TrackingDatabase();
-  final SupabaseClient _supabase = Supabase.instance.client;
-  final Connectivity _connectivity = Connectivity();
+/// Orquesta la lógica de negocio:
+/// 1. Compila puntos GPS → payload
+/// 2. Encola en sync_queue → limpia points
+/// 3. Escucha conectividad para auto-subir
+/// 4. Permite retry manual
+///
+/// Delega toda operación I/O al [SyncProvider].
+class SyncRepository {
+  final SyncProvider _provider;
   final Uuid _uuid = const Uuid();
 
   StreamSubscription? _connectivitySub;
   bool _isSyncing = false;
 
+  SyncRepository(this._provider);
+
   /// Iniciar listener de conectividad
   void startListening() {
     _connectivitySub?.cancel();
-    _connectivitySub = _connectivity.onConnectivityChanged.listen((results) {
+    _connectivitySub = _provider.onConnectivityChanged.listen((results) {
       final hasInternet = results.any(
         (r) =>
             r == ConnectivityResult.wifi ||
@@ -59,7 +58,7 @@ class SyncService {
   /// 3. Guarda en sync_queue
   /// 4. LIMPIA tracking_points para liberar espacio
   Future<void> enqueueExcursion({String? excursionId}) async {
-    final points = await _db.getAllPoints();
+    final points = await _provider.getAllPoints();
     if (points.isEmpty) return;
 
     final tracePoints = points
@@ -76,7 +75,7 @@ class SyncService {
         )
         .toList();
 
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = _provider.currentUserId;
     final payload = TrackCompiler.buildSyncPayload(
       points: tracePoints,
       excursionId: excursionId,
@@ -84,7 +83,7 @@ class SyncService {
     );
 
     final id = _uuid.v4();
-    await _db.insertSyncItem(
+    await _provider.insertSyncItem(
       SyncQueueCompanion(
         id: Value(id),
         excursionPayload: Value(jsonEncode(payload)),
@@ -94,7 +93,7 @@ class SyncService {
     );
 
     // Limpiar puntos de tracking (libera para nueva grabación)
-    await _db.clearAllPoints();
+    await _provider.clearAllPoints();
 
     // Intentar sync inmediata
     await syncPending();
@@ -106,17 +105,16 @@ class SyncService {
     _isSyncing = true;
 
     try {
-      final pending = await _db.getPendingSyncItems();
+      final pending = await _provider.getPendingSyncItems();
 
       for (final item in pending) {
         try {
           final payload =
               jsonDecode(item.excursionPayload) as Map<String, dynamic>;
           await _uploadPayload(payload);
-          await _db.deleteSyncItem(item.id);
+          await _provider.deleteSyncItem(item.id);
         } catch (e) {
-          // Si falla un item, continuar con los demás
-          log('SyncService: Error subiendo ${item.id}: $e');
+          log('SyncRepository: Error subiendo ${item.id}: $e');
         }
       }
     } finally {
@@ -127,17 +125,23 @@ class SyncService {
   /// Reintento manual de un item específico.
   Future<bool> retryItem(String itemId) async {
     try {
-      final items = await _db.getPendingSyncItems();
+      final items = await _provider.getPendingSyncItems();
       final item = items.firstWhere((i) => i.id == itemId);
 
       final payload = jsonDecode(item.excursionPayload) as Map<String, dynamic>;
       await _uploadPayload(payload);
-      await _db.deleteSyncItem(item.id);
+      await _provider.deleteSyncItem(item.id);
       return true;
     } catch (e) {
-      log('SyncService: Retry failed for $itemId: $e');
+      log('SyncRepository: Retry failed for $itemId: $e');
       return false;
     }
+  }
+
+  /// Obtener conteo de items pendientes
+  Future<int> getPendingCount() async {
+    final items = await _provider.getPendingSyncItems();
+    return items.length;
   }
 
   /// Sube un payload a Supabase.
@@ -146,22 +150,11 @@ class SyncService {
     final excursionId = payload['excursion_id'] as String?;
 
     // 1. Insertar track en geo_core.user_tracks
-    //    (esto dispara el trigger de geofencing automáticamente)
-    final trackResponse = await _supabase
-        .schema('geo_core')
-        .from('user_tracks')
-        .insert(trackData)
-        .select('id')
-        .single();
-
-    final trackId = trackResponse['id'] as String;
+    final trackId = await _provider.uploadTrack(trackData);
 
     // 2. Actualizar excursión con el recorded_track_id
     if (excursionId != null) {
-      await _supabase
-          .from('excursions')
-          .update({'recorded_track_id': trackId})
-          .eq('id', excursionId);
+      await _provider.updateExcursionTrack(excursionId, trackId);
     }
   }
 }

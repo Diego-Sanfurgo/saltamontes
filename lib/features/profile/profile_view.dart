@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:saltamontes/core/injection.dart';
 import 'package:saltamontes/data/repositories/excursion_repository.dart';
+import 'package:saltamontes/data/repositories/sync_repository.dart';
 import 'package:saltamontes/features/excursion/bloc/excursion_bloc.dart';
 import 'package:saltamontes/features/profile/widgets/excursion_list.dart';
 import 'package:saltamontes/features/profile/widgets/downloads_list.dart';
@@ -13,14 +15,12 @@ class ProfileView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RepositoryProvider(
-      create: (_) => ExcursionRepository(),
-      child: BlocProvider(
-        create: (context) =>
-            ExcursionBloc(repository: context.read<ExcursionRepository>())
-              ..add(LoadExcursions()),
-        child: const _ProfileBody(),
-      ),
+    return BlocProvider(
+      create: (_) => ExcursionBloc(
+        repository: sl<ExcursionRepository>(),
+        syncRepository: sl<SyncRepository>(),
+      )..add(LoadExcursions()),
+      child: const _ProfileBody(),
     );
   }
 }

@@ -9,7 +9,7 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:saltamontes/core/services/layer_service.dart';
 import 'package:saltamontes/core/services/location_service.dart';
 import 'package:saltamontes/core/services/trace_service.dart';
-import 'package:saltamontes/core/services/sync_service.dart';
+import 'package:saltamontes/data/repositories/sync_repository.dart';
 import 'package:saltamontes/core/utils/constant_and_variables.dart';
 import 'package:saltamontes/data/providers/map_controller_provider.dart';
 import 'package:saltamontes/data/repositories/tracking_map_repository.dart';
@@ -22,8 +22,10 @@ class TrackingMapBloc extends Bloc<TrackingMapEvent, TrackingMapState> {
   TrackingMapBloc({
     required TrackingMapRepository repository,
     required MapControllerProvider mapControllerProvider,
+    required SyncRepository syncRepository,
   }) : _repository = repository,
        _mapControllerProvider = mapControllerProvider,
+       _syncRepository = syncRepository,
        super(const TrackingMapState()) {
     on<TrackingMapInitialize>(_onInitialize);
     on<TrackingMapStartTracking>(_onStartTracking);
@@ -55,6 +57,7 @@ class TrackingMapBloc extends Bloc<TrackingMapEvent, TrackingMapState> {
   MapboxMap? _controller;
   final TrackingMapRepository _repository;
   final MapControllerProvider _mapControllerProvider;
+  final SyncRepository _syncRepository;
   // final LocationService _locationService = LocationService.instance;
   final TraceService _traceService = TraceService();
 
@@ -148,7 +151,7 @@ class TrackingMapBloc extends Bloc<TrackingMapEvent, TrackingMapState> {
       await updateMapTrack(await _traceService.getAllTraces(), _controller);
 
       // Compile-and-queue para sync offline-first (Module 5)
-      await SyncService.instance.enqueueExcursion();
+      await _syncRepository.enqueueExcursion();
 
       await _repository.clearTrackingStatus();
       emit(state.copyWith(status: TrackingState.STOPPED));

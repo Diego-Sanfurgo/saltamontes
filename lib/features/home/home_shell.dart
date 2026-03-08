@@ -5,8 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bootstrap_icons/bootstrap_icons.dart';
 
+import 'package:saltamontes/core/injection.dart';
 import 'package:saltamontes/data/providers/map_controller_provider.dart';
-import 'package:saltamontes/data/providers/place_provider.dart';
 import 'package:saltamontes/data/repositories/map_repository.dart';
 import 'package:saltamontes/data/repositories/place_repository.dart';
 import 'package:saltamontes/features/map_filter/cubit/map_filter_cubit.dart';
@@ -27,13 +27,12 @@ class HomeShellView extends StatelessWidget {
       child: Builder(
         builder: (context) {
           final mapControllerProvider = context.read<MapControllerProvider>();
-          return RepositoryProvider(
-            create: (context) => TrackingMapRepository(PlaceApiProvider()),
+          return RepositoryProvider.value(
+            value: sl<TrackingMapRepository>(),
             child: BlocProvider(
-              create: (context) => MapBloc(
-                PlaceRepository(PlaceApiProvider()),
-                mapControllerProvider,
-              )..add(MapStarted()),
+              create: (context) =>
+                  MapBloc(sl<PlaceRepository>(), mapControllerProvider)
+                    ..add(MapStarted()),
               child: BlocProvider(
                 create: (context) => MapFilterCubit(mapControllerProvider),
                 child: BlocProvider(

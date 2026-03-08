@@ -147,7 +147,7 @@ class _PendingSyncTile extends StatelessWidget {
           icon: Icon(Icons.cloud_upload, color: colorScheme.error),
           tooltip: 'Reintentar subida',
           onPressed: () {
-            // Retry via SyncService
+            // Retry via SyncRepository
             context.read<ExcursionBloc>().add(RetrySyncItem('sync_$index'));
           },
         ),

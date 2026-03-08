@@ -4,19 +4,21 @@ import 'package:equatable/equatable.dart';
 
 import 'package:saltamontes/data/models/excursion.dart';
 import 'package:saltamontes/data/repositories/excursion_repository.dart';
-import 'package:saltamontes/data/providers/tracking_database.dart';
+import 'package:saltamontes/data/repositories/sync_repository.dart';
 
 part 'excursion_event.dart';
 part 'excursion_state.dart';
 
 class ExcursionBloc extends Bloc<ExcursionEvent, ExcursionState> {
   final ExcursionRepository _repository;
-  final TrackingDatabase _db;
+  final SyncRepository _syncRepository;
 
-  ExcursionBloc({required ExcursionRepository repository, TrackingDatabase? db})
-    : _repository = repository,
-      _db = db ?? TrackingDatabase(),
-      super(const ExcursionState()) {
+  ExcursionBloc({
+    required ExcursionRepository repository,
+    required SyncRepository syncRepository,
+  }) : _repository = repository,
+       _syncRepository = syncRepository,
+       super(const ExcursionState()) {
     on<LoadExcursions>(_onLoad);
     on<CreateQuickExcursion>(_onCreateQuick);
     on<CreateScheduledExcursion>(_onCreateScheduled);
@@ -29,17 +31,17 @@ class ExcursionBloc extends Bloc<ExcursionEvent, ExcursionState> {
   ) async {
     emit(state.copyWith(isLoading: true));
     try {
-      // Cargar excursiones remotas
+      // Cargar excursiones remotas (con participants y places embebidos)
       final remote = await _repository.getMyExcursions();
 
-      // Cargar items pendientes de sync local
-      final localPending = await _db.getPendingSyncItems();
+      // Cargar conteo de items pendientes de sync
+      final pendingCount = await _syncRepository.getPendingCount();
 
       emit(
         state.copyWith(
           isLoading: false,
           excursions: remote,
-          pendingSyncCount: localPending.length,
+          pendingSyncCount: pendingCount,
         ),
       );
     } catch (e) {
@@ -86,8 +88,8 @@ class ExcursionBloc extends Bloc<ExcursionEvent, ExcursionState> {
     RetrySyncItem event,
     Emitter<ExcursionState> emit,
   ) async {
-    // La lógica real de retry la maneja SyncService
-    // Aquí simplemente recargamos la lista
+    // Delegar retry al SyncRepository y recargar la lista
+    await _syncRepository.retryItem(event.syncItemId);
     add(LoadExcursions());
   }
 }
