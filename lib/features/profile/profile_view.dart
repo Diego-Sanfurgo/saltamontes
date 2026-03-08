@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:saltamontes/core/injection.dart';
+import 'package:saltamontes/core/di/injection.dart';
 import 'package:saltamontes/data/repositories/excursion_repository.dart';
 import 'package:saltamontes/data/repositories/sync_repository.dart';
 import 'package:saltamontes/features/excursion/bloc/excursion_bloc.dart';

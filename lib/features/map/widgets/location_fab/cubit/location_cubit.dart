@@ -3,6 +3,7 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart' as geo;
+import 'package:saltamontes/core/di/injection.dart';
 import 'package:saltamontes/core/services/location_service.dart';
 import 'package:saltamontes/data/providers/map_controller_provider.dart';
 
@@ -22,7 +23,7 @@ class LocationCubit extends Cubit<LocationState> {
 
   final MapControllerProvider _mapControllerProvider;
   MapboxMap? _controller;
-  final LocationService _locationService = LocationService.instance;
+  final LocationService _locationService = sl<LocationService>();
   StreamSubscription<geo.Position>? _locationSubscription;
 
   /// Umbral de velocidad baja (km/h) — debajo usa magnetómetro (HEADING).

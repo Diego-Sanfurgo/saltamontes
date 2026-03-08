@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:injectable/injectable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:saltamontes/data/providers/tracking_database.dart';
@@ -11,15 +12,15 @@ import 'package:saltamontes/data/providers/tracking_database.dart';
 /// - Lectura/escritura en TrackingDatabase (Drift/SQLite local)
 /// - Operaciones de red contra Supabase
 /// - Stream de conectividad
-///
-/// Singleton: mantiene las mismas instancias de DB y Connectivity.
+@lazySingleton
 class SyncProvider {
-  static final SyncProvider instance = SyncProvider._();
-  SyncProvider._();
+  final SupabaseClient _supabase;
+  final TrackingDatabase _db;
+  final Connectivity _connectivity;
 
-  final TrackingDatabase _db = TrackingDatabase();
-  final SupabaseClient _supabase = Supabase.instance.client;
-  final Connectivity _connectivity = Connectivity();
+  SyncProvider(this._supabase)
+    : _db = TrackingDatabase(),
+      _connectivity = Connectivity();
 
   // ─── Auth ───
 

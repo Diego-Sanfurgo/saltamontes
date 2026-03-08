@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bootstrap_icons/bootstrap_icons.dart';
 
-import 'package:saltamontes/core/injection.dart';
+import 'package:saltamontes/core/di/injection.dart';
 import 'package:saltamontes/data/providers/map_controller_provider.dart';
 import 'package:saltamontes/data/repositories/map_repository.dart';
 import 'package:saltamontes/data/repositories/place_repository.dart';
@@ -28,7 +28,7 @@ class HomeShellView extends StatelessWidget {
         builder: (context) {
           final mapControllerProvider = context.read<MapControllerProvider>();
           return RepositoryProvider.value(
-            value: sl<TrackingMapRepository>(),
+            value: sl<MapPlaceRepository>(),
             child: BlocProvider(
               create: (context) =>
                   MapBloc(sl<PlaceRepository>(), mapControllerProvider)

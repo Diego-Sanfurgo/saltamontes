@@ -4,6 +4,7 @@ import 'dart:developer';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:drift/drift.dart';
+import 'package:injectable/injectable.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:saltamontes/core/utils/track_compiler.dart';
@@ -20,6 +21,7 @@ import 'package:saltamontes/data/providers/tracking_database.dart';
 /// 4. Permite retry manual
 ///
 /// Delega toda operación I/O al [SyncProvider].
+@lazySingleton
 class SyncRepository {
   final SyncProvider _provider;
   final Uuid _uuid = const Uuid();

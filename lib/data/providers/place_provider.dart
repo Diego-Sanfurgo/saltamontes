@@ -1,17 +1,19 @@
 import 'dart:developer';
 
-import 'package:saltamontes/data/models/place.dart';
+import 'package:injectable/injectable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:saltamontes/data/models/place.dart';
+
+@lazySingleton
 class PlaceApiProvider {
-  factory PlaceApiProvider() => _instance;
-  static final PlaceApiProvider _instance = PlaceApiProvider._internal();
-  final SupabaseClient supabase = Supabase.instance.client;
-  PlaceApiProvider._internal();
+  final SupabaseClient _client;
+
+  PlaceApiProvider(this._client);
 
   Future<Set<Place>> fetchAll() async {
     try {
-      final List<Map<String, dynamic>> response = await supabase
+      final List<Map<String, dynamic>> response = await _client
           .from('places')
           .select('*');
       return response.map((e) => Place.fromJson(e)).toSet();
@@ -23,7 +25,7 @@ class PlaceApiProvider {
 
   Future<Set<Place>> fetchPeaks() async {
     try {
-      final List<Map<String, dynamic>> response = await supabase
+      final List<Map<String, dynamic>> response = await _client
           .from('places')
           .select('*')
           .eq('type', 'peak');
@@ -36,7 +38,7 @@ class PlaceApiProvider {
 
   Future<Set<Place>> fetchWaterfalls() async {
     try {
-      final List<Map<String, dynamic>> response = await supabase
+      final List<Map<String, dynamic>> response = await _client
           .from('places')
           .select('*')
           .eq('type', 'waterfall');
@@ -49,7 +51,7 @@ class PlaceApiProvider {
 
   Future<Set<Place>> fetchPasses() async {
     try {
-      final List<Map<String, dynamic>> response = await supabase
+      final List<Map<String, dynamic>> response = await _client
           .from('places')
           .select('*')
           .eq('type', 'pass');
@@ -62,7 +64,7 @@ class PlaceApiProvider {
 
   Future<Set<Place>> fetchLakes() async {
     try {
-      final List<Map<String, dynamic>> response = await supabase
+      final List<Map<String, dynamic>> response = await _client
           .from('places')
           .select('*')
           .eq('type', 'lake');
@@ -75,11 +77,11 @@ class PlaceApiProvider {
 
   Future<Set<Place>> queryByName(String name, {bool isLimited = true}) async {
     try {
-      final List<Map<String, dynamic>> response = await supabase
+      final List<Map<String, dynamic>> response = await _client
           .from('places')
           .select('*')
-          .ilike('name', '%$name%') // Búsqueda parcial insensible a mayúsculas
-          .limit(isLimited ? 10 : 50); // Limita resultados para performance UI
+          .ilike('name', '%$name%')
+          .limit(isLimited ? 10 : 50);
       return response.map((e) => Place.fromJson(e)).toSet();
     } catch (e) {
       log(e.toString());
@@ -89,7 +91,7 @@ class PlaceApiProvider {
 
   Future<Place?> fetchById(String id) async {
     try {
-      final Map<String, dynamic>? response = await supabase
+      final Map<String, dynamic>? response = await _client
           .from('places')
           .select('*')
           .eq('id', id)
@@ -104,7 +106,7 @@ class PlaceApiProvider {
 
   Future<Set<Place>> fetchByProtectedAreaId(String protectedAreaId) async {
     try {
-      final List<Map<String, dynamic>> response = await supabase
+      final List<Map<String, dynamic>> response = await _client
           .from('places')
           .select('*')
           .eq('protected_area_id', protectedAreaId)

@@ -2,7 +2,7 @@ import 'package:bootstrap_icons/bootstrap_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:saltamontes/core/injection.dart';
+import 'package:saltamontes/core/di/injection.dart';
 import 'package:saltamontes/core/services/navigation_service.dart';
 
 import 'package:saltamontes/data/repositories/place_repository.dart';

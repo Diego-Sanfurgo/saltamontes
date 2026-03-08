@@ -14,6 +14,7 @@ import 'package:saltamontes/features/home/dto/selected_feature_dto.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
+import 'package:saltamontes/core/di/injection.dart';
 import 'package:saltamontes/core/services/location_service.dart';
 
 import 'package:saltamontes/features/home/functions/on_map_tap_listener.dart';
@@ -39,7 +40,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   final MapControllerProvider _mapControllerProvider;
 
   MapboxMap? _controller;
-  final LocationService _locationService = LocationService.instance;
+  final LocationService _locationService = sl<LocationService>();
   SelectedFeatureDTO _selectedFeatureDTO = SelectedFeatureDTO.empty();
 
   Future<void> _onStarted(MapStarted event, Emitter<MapState> emit) async {

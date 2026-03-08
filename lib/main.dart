@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:saltamontes/core/injection.dart';
+import 'package:saltamontes/core/di/injection.dart';
 import 'package:saltamontes/core/theme/theme.dart';
 import 'package:saltamontes/core/router/app_router.dart';
 import 'package:saltamontes/data/repositories/settings_repository.dart';

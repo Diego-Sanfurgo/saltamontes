@@ -1,9 +1,11 @@
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+
+import 'package:saltamontes/core/di/injection.dart';
 import 'package:saltamontes/core/services/location_service.dart';
 
 ///Este método se encarga de actualizar la cámara del mapa para que siga al usuario
 void setupPositionTracking(MapboxMap controller) {
-  LocationService.instance.positionStream.listen((position) {
+  sl<LocationService>().positionStream.listen((position) {
     controller.easeTo(
       CameraOptions(
         zoom: 12,

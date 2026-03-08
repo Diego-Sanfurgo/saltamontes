@@ -1,3 +1,4 @@
+import 'package:injectable/injectable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:saltamontes/data/models/excursion.dart';
@@ -10,11 +11,11 @@ import 'package:saltamontes/data/models/user_track.dart';
 /// Responsable de:
 /// - Ejecutar consultas a Supabase
 /// - Mapear JSON ↔ Objetos tipados
+@lazySingleton
 class ExcursionProvider {
   final SupabaseClient _client;
 
-  ExcursionProvider({SupabaseClient? client})
-    : _client = client ?? Supabase.instance.client;
+  ExcursionProvider(this._client);
 
   String? get currentUserId => _client.auth.currentUser?.id;
 

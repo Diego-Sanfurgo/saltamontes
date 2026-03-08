@@ -1,5 +1,7 @@
+import 'package:injectable/injectable.dart';
 import 'package:saltamontes/data/providers/tracking_provider.dart';
 
+@lazySingleton
 class TrackingMapRepository {
   final TrackingProvider _provider;
 

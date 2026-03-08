@@ -7,13 +7,13 @@ import 'package:geolocator/geolocator.dart' as geo;
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 import 'package:saltamontes/core/services/layer_service.dart';
+import 'package:saltamontes/core/di/injection.dart';
 import 'package:saltamontes/core/services/location_service.dart';
-import 'package:saltamontes/core/services/trace_service.dart';
+import 'package:saltamontes/core/services/native_tracking_service.dart';
 import 'package:saltamontes/data/repositories/sync_repository.dart';
 import 'package:saltamontes/core/utils/constant_and_variables.dart';
 import 'package:saltamontes/data/providers/map_controller_provider.dart';
 import 'package:saltamontes/data/repositories/tracking_map_repository.dart';
-import 'package:saltamontes/features/map/functions/add_tracking_polyline.dart';
 
 part 'tracking_map_event.dart';
 part 'tracking_map_state.dart';
@@ -58,8 +58,9 @@ class TrackingMapBloc extends Bloc<TrackingMapEvent, TrackingMapState> {
   final TrackingMapRepository _repository;
   final MapControllerProvider _mapControllerProvider;
   final SyncRepository _syncRepository;
-  // final LocationService _locationService = LocationService.instance;
-  final TraceService _traceService = TraceService();
+  final LocationService _locationService = sl<LocationService>();
+  final NativeTrackingService _nativeTrackingService =
+      sl<NativeTrackingService>();
 
   void _onControllerChanged() {
     _controller = _mapControllerProvider.controller;
@@ -74,7 +75,7 @@ class TrackingMapBloc extends Bloc<TrackingMapEvent, TrackingMapState> {
 
       emit(state.copyWith(status: TrackingState.START_LOADING));
 
-      geo.Position? position = LocationService.instance.lastPosition;
+      geo.Position? position = _locationService.lastPosition;
       if (position == null) return;
 
       final Map<String, dynamic> geojson = FeatureCollection(
@@ -93,8 +94,7 @@ class TrackingMapBloc extends Bloc<TrackingMapEvent, TrackingMapState> {
         jsonEncode(geojson),
         MapConstants.trackingID,
       );
-      await _traceService.startTracking();
-      await updateMapTrack(await _traceService.getAllTraces(), _controller);
+      await _nativeTrackingService.startService();
 
       await Future.delayed(const Duration(seconds: 1));
       emit(state.copyWith(status: TrackingState.STARTED));
@@ -112,8 +112,7 @@ class TrackingMapBloc extends Bloc<TrackingMapEvent, TrackingMapState> {
   ) async {
     try {
       if (_controller == null) return;
-      await _traceService.startTracking();
-      await updateMapTrack(await _traceService.getAllTraces(), _controller);
+      await _nativeTrackingService.stopService();
       emit(state.copyWith(status: TrackingState.PAUSED));
     } on Exception {
       emit(state.copyWith(status: TrackingState.ERROR));
@@ -129,8 +128,7 @@ class TrackingMapBloc extends Bloc<TrackingMapEvent, TrackingMapState> {
     try {
       if (_controller == null) return;
       emit(state.copyWith(status: TrackingState.START_LOADING));
-      await _traceService.startTracking();
-      await updateMapTrack(await _traceService.getAllTraces(), _controller);
+      await _nativeTrackingService.startService();
       emit(state.copyWith(status: TrackingState.STARTED));
     } on Exception catch (e) {
       log(e.toString());
@@ -147,8 +145,7 @@ class TrackingMapBloc extends Bloc<TrackingMapEvent, TrackingMapState> {
     try {
       if (_controller == null) return;
       emit(state.copyWith(status: TrackingState.STOP_LOADING));
-      await _traceService.stopTracking();
-      await updateMapTrack(await _traceService.getAllTraces(), _controller);
+      await _nativeTrackingService.stopService();
 
       // Compile-and-queue para sync offline-first (Module 5)
       await _syncRepository.enqueueExcursion();

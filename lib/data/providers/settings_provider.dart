@@ -1,5 +1,7 @@
+import 'package:injectable/injectable.dart';
 import 'package:saltamontes/data/providers/base_provider.dart';
 
+@lazySingleton
 class SettingsProvider extends BaseProvider {
   static final SettingsProvider _instance = SettingsProvider._internal();
 

@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
-import 'package:saltamontes/core/injection.dart';
+import 'package:saltamontes/core/di/injection.dart';
 import 'package:saltamontes/core/services/navigation_service.dart';
 import 'package:saltamontes/data/providers/map_controller_provider.dart';
 import 'package:saltamontes/data/repositories/excursion_repository.dart';

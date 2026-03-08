@@ -1,11 +1,14 @@
 import 'dart:async';
+
 import 'package:geolocator/geolocator.dart';
+import 'package:injectable/injectable.dart';
 
+/// Servicio de localización GPS global.
+///
+/// Proporciona un stream de posiciones y la última posición conocida.
+/// Inyectado como lazy singleton — no usa BuildContext.
+@lazySingleton
 class LocationService {
-  // --- Singleton ---
-  LocationService._internal();
-  static final LocationService instance = LocationService._internal();
-
   // Última ubicación conocida
   Position? lastPosition;
 
@@ -19,6 +22,7 @@ class LocationService {
   StreamSubscription<Position>? _subscription;
 
   // Inicializar el servicio
+  @PostConstruct(preResolve: true)
   Future<void> init() async {
     final hasPermission = await _ensurePermissions();
     if (!hasPermission) return;
@@ -59,7 +63,8 @@ class LocationService {
     return true;
   }
 
-  // Liberar recursos (opcional)
+  // Liberar recursos
+  @disposeMethod
   void dispose() {
     _subscription?.cancel();
     _positionController.close();

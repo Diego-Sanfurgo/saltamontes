@@ -1,10 +1,16 @@
 import 'dart:developer';
 
+import 'package:injectable/injectable.dart';
 import 'package:saltamontes/data/models/place.dart';
 import 'package:saltamontes/data/providers/place_provider.dart';
 
-class TrackingMapRepository {
-  TrackingMapRepository(this._placeProvider);
+/// Repositorio de datos del mapa principal.
+///
+/// Proporciona acceso a peaks, waterfalls, passes y lakes
+/// para renderizar en las capas del mapa.
+@lazySingleton
+class MapPlaceRepository {
+  MapPlaceRepository(this._placeProvider);
 
   final PlaceApiProvider _placeProvider;
 

@@ -1,5 +1,7 @@
+import 'package:injectable/injectable.dart';
 import 'package:saltamontes/data/providers/base_provider.dart';
 
+@lazySingleton
 class TrackingProvider extends BaseProvider {
   static final TrackingProvider _instance = TrackingProvider._internal();
 

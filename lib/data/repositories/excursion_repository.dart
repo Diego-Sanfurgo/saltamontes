@@ -1,3 +1,4 @@
+import 'package:injectable/injectable.dart';
 import 'package:saltamontes/data/models/excursion.dart';
 import 'package:saltamontes/data/models/excursion_participant.dart';
 import 'package:saltamontes/data/models/excursion_place.dart';
@@ -8,6 +9,7 @@ import 'package:saltamontes/data/providers/excursion_provider.dart';
 ///
 /// Orquesta la lógica de negocio delegando las operaciones
 /// de datos al [ExcursionProvider].
+@lazySingleton
 class ExcursionRepository {
   final ExcursionProvider _provider;
 

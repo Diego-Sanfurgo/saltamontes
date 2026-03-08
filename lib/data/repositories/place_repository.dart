@@ -1,8 +1,10 @@
 import 'dart:developer';
 
+import 'package:injectable/injectable.dart';
 import 'package:saltamontes/data/models/place.dart';
 import 'package:saltamontes/data/providers/place_provider.dart';
 
+@lazySingleton
 class PlaceRepository {
   PlaceRepository(this._provider);
 
