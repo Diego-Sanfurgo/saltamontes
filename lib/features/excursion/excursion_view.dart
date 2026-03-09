@@ -6,7 +6,7 @@ import 'package:saltamontes/core/services/navigation_service.dart';
 import 'package:saltamontes/data/repositories/excursion_repository.dart';
 import 'package:saltamontes/data/repositories/sync_repository.dart';
 import 'package:saltamontes/features/excursion/bloc/excursion_bloc.dart';
-import 'package:saltamontes/features/map/widgets/create_excursion_sheet.dart';
+import 'package:saltamontes/features/map/widgets/tracking/create_excursion_sheet.dart';
 
 class ExcursionView extends StatelessWidget {
   const ExcursionView({super.key});

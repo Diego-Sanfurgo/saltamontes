@@ -12,7 +12,7 @@ import 'package:saltamontes/data/repositories/tracking_map_repository.dart';
 import 'package:saltamontes/data/repositories/sync_repository.dart';
 import 'package:saltamontes/features/excursion/bloc/excursion_bloc.dart';
 import 'package:saltamontes/features/map/widgets/mocked_search_bar.dart';
-import 'package:saltamontes/features/map/widgets/place_details_sheet.dart';
+import 'package:saltamontes/features/map/widgets/place_details/place_details_sheet.dart';
 import 'package:saltamontes/features/map/widgets/location_fab/location_fab.dart';
 
 import 'package:saltamontes/features/home/bloc/map_bloc.dart';

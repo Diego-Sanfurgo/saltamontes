@@ -30,6 +30,8 @@ import 'package:saltamontes/data/repositories/sync_repository.dart' as _i929;
 import 'package:saltamontes/data/repositories/tracking_map_repository.dart'
     as _i603;
 import 'package:supabase_flutter/supabase_flutter.dart' as _i454;
+import 'package:saltamontes/features/map/widgets/place_details/cubit/place_details_cubit.dart'
+    as _iCub;
 
 extension GetItInjectableX on _i174.GetIt {
   // initializes the registration of main-scope dependencies inside of GetIt
@@ -76,6 +78,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i44.PlaceRepository>(
       () => _i44.PlaceRepository(gh<_i605.PlaceApiProvider>()),
+    );
+    gh.factory<_iCub.PlaceDetailsCubit>(
+      () => _iCub.PlaceDetailsCubit(gh<_i44.PlaceRepository>()),
     );
     gh.lazySingleton<_i603.TrackingMapRepository>(
       () => _i603.TrackingMapRepository(provider: gh<_i571.TrackingProvider>()),

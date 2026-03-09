@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:saltamontes/core/di/injection.dart';
 import 'package:saltamontes/data/models/place.dart';
-import 'package:saltamontes/data/repositories/place_repository.dart';
+import 'package:saltamontes/features/map/widgets/place_details/cubit/place_details_cubit.dart';
+import 'package:saltamontes/features/map/widgets/place_details/cubit/place_details_state.dart';
 
-class PlaceDetailsSheet extends StatefulWidget {
+class PlaceDetailsSheet extends StatelessWidget {
   const PlaceDetailsSheet({
     super.key,
     required this.place,
@@ -14,10 +16,31 @@ class PlaceDetailsSheet extends StatefulWidget {
   final VoidCallback onClose;
 
   @override
-  State<PlaceDetailsSheet> createState() => _PlaceDetailsSheetState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) {
+        final cubit = sl<PlaceDetailsCubit>();
+        if (place.type == PlaceType.park && place.protectedAreaId != null) {
+          cubit.loadPois(place.protectedAreaId!);
+        }
+        return cubit;
+      },
+      child: _PlaceDetailsSheetView(place: place, onClose: onClose),
+    );
+  }
 }
 
-class _PlaceDetailsSheetState extends State<PlaceDetailsSheet> {
+class _PlaceDetailsSheetView extends StatefulWidget {
+  const _PlaceDetailsSheetView({required this.place, required this.onClose});
+
+  final Place place;
+  final VoidCallback onClose;
+
+  @override
+  State<_PlaceDetailsSheetView> createState() => _PlaceDetailsSheetViewState();
+}
+
+class _PlaceDetailsSheetViewState extends State<_PlaceDetailsSheetView> {
   final DraggableScrollableController _sheetController =
       DraggableScrollableController();
 
@@ -61,7 +84,9 @@ class _PlaceDetailsSheetState extends State<PlaceDetailsSheet> {
               ),
               SliverToBoxAdapter(child: const Divider()),
               SliverToBoxAdapter(child: _Description()),
-              SliverToBoxAdapter(child: _ParkPOIs(place: widget.place)),
+              if (widget.place.type == PlaceType.park &&
+                  widget.place.protectedAreaId != null)
+                SliverToBoxAdapter(child: _ParkPOIs(place: widget.place)),
               SliverToBoxAdapter(child: _PhotoCarousel()),
               SliverToBoxAdapter(child: _WeatherForecast()),
               // Extra bottom padding
@@ -218,22 +243,21 @@ class _ParkPOIs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (place.type != PlaceType.park || place.protectedAreaId == null) {
-      return const SizedBox.shrink();
-    }
-
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
 
-    return FutureBuilder<Set<Place>>(
-      future: context.read<PlaceRepository>().getByProtectedAreaId(
-        place.protectedAreaId!,
-      ),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+    return BlocBuilder<PlaceDetailsCubit, PlaceDetailsState>(
+      builder: (context, state) {
+        if (state.isLoadingPois) {
+          return const Padding(
+            padding: EdgeInsets.all(32.0),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (state.pois.isEmpty) {
           return const SizedBox.shrink();
         }
-        final pois = snapshot.data!.toList();
+        final pois = state.pois.toList();
 
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

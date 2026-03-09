@@ -7,7 +7,7 @@ import 'package:saltamontes/core/services/navigation_service.dart';
 import 'package:saltamontes/features/excursion/bloc/excursion_bloc.dart';
 import 'package:saltamontes/features/map/bloc/tracking_map_bloc/tracking_map_bloc.dart';
 
-import '../create_excursion_sheet.dart';
+import 'create_excursion_sheet.dart';
 
 class TrackingFAB extends StatelessWidget {
   const TrackingFAB({super.key});
